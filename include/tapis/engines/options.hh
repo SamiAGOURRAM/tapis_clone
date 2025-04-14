@@ -94,6 +94,7 @@ namespace tapis {
 
     EngineKind engine = EngineKind::horn_ice_qdt;
     bool chc_quantify_for_assert = true;
+    bool print_invs = false;
     std::string path;
   };
 

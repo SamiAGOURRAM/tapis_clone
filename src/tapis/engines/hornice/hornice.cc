@@ -5,6 +5,7 @@
 #include "tapis/engines/hornice/hornice.hh"
 
 #include "tapis/engines/statistics.hh"
+#include "tapis/engines/options.hh"
 #include "tapis/engines/hornice/qdt/learner.hh"
 
 namespace tapis::HornICE {
@@ -28,7 +29,11 @@ namespace tapis::HornICE {
       }
       counterexamples = _teacher.check(*learner_res);
       if(counterexamples.empty()) {
-        // TODO: store the invariants somewhere
+        if(get_options().print_invs) {
+          for(auto &[predicate, ld]: *learner_res) {
+            std::cout << predicate->name() << ": " << ld._body << std::endl;
+          }
+        }
         return hcvc::VerifierResponse::SAFE;
       }
     }

@@ -63,8 +63,11 @@ int main(int argc, char *argv[]) {
   for(int i = 1; i < argc; i++) {
     std::string argument(argv[i]);
     if(!argument.compare(0, 2 /* "==".size() */, "--")) {
+      if(argument == "--print-invs") {
+        options.print_invs = true;
+      }
       // absint options
-      if(argument == "--no-absint.perform") {
+      else if(argument == "--no-absint.perform") {
         options.absint.perform = false;
       } else if(argument == "--absint-domain") {
         tapis::AbsIntDomain domain;
