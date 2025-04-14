@@ -40,9 +40,9 @@ llvm_map_components_to_libnames(llvm_libs Core Support Option FrontendOpenMP)
 
 add_executable(tapis src/tapis/bin/tapis.cc external/sexpresso/sexpresso/sexpresso.cpp)
 target_link_libraries(tapis
-        smtface
         tapislib
         hcvc
+        smtface
         # apron
         apronxx
         apron
