@@ -61,7 +61,9 @@ namespace tapis::HornICE::qdt {
         }
       }
       if(increase_quantifiers) {
+#ifndef NDEBUG
         std::cout << "Number of quantifier variables incremented" << std::endl;
+#endif
         more_quantifier_variable = true;
         _quantifier_manager.increase(1);
         _diagram_manager.clear();
