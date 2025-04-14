@@ -6,6 +6,7 @@
 
 #include <map>
 #include <stack>
+#include <variant>
 #include "smtface/core/term.hh"
 
 namespace smtface::core {

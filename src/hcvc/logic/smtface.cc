@@ -3,6 +3,7 @@
 //
 
 #include <utility>
+#include <variant>
 
 #include "hcvc/logic/smtface.hh"
 

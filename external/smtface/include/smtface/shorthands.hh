@@ -5,6 +5,7 @@
 #pragma once
 
 #include <set>
+#include <variant>
 #include "smtface/core/symbol.hh"
 #include "smtface/core/term.hh"
 #include "smtface/core/interpolator.hh"
