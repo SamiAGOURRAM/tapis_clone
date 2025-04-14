@@ -125,7 +125,7 @@ make -j
 <a id="usage"></a>
 ## Usage
 
-Once Tapis is built, it can be run from the command line to verify C programs. The tool supports a variety of command-line options to configure analysis behavior, select verification engines, and customize learning parameters.
+Once Tapis is built, it can be run from the command line to verify C programs. The tool supports a variety of command-line options to configure analysis behavior and customize learning parameters.
 
 ### Basic Usage
 
