@@ -14,7 +14,7 @@ TAPIS_BENCHMARK_PATH = BENCHMARKING_FOLDER + "tapis/"
 Z3_PATH = "z3"
 
 # FreqHorn
-FREQHORN_PATH = "/Users/btwael/Desktop/freqhorn/build/tools/deep/freqhorn"
+FREQHORN_PATH = "<path to freqhorn executable>"
 
 # Ultimate Automizer
 UA_PATH = "<path to Ultimate.py>"
