@@ -2,8 +2,6 @@
 Tapis is a data-driven verification tool for iterative and recursive array-manipulating programs (with parametric size), based on the method presented in the CAV'25 paper _Data-driven Verification of Procedural Programs with Integer Arrays_.
 This repository also includes all the benchmarks and scripts used in the experimental study presented in the paper.
 
-<ARTIFACT LINK>
-
 **Table of content:**
  - [Overview](#overview)
  - [Installation](#installation)
