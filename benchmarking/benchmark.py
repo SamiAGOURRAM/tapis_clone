@@ -420,7 +420,7 @@ elif command == "run_all":
     run_all()
 elif command == "results":
     res_tools = []
-    if len(sys.argv) > 4:
+    if len(sys.argv) >= 4:
         for i in range(3, len(sys.argv)):
             res_tools.append(sys.argv[i])
     else:
