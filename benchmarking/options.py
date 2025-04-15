@@ -3,8 +3,8 @@ timeout = 60 * 5
 
 tools = ["tapis", "spacer", "freqhorn", "ultimate-automizer", "prophic3", "diffy", "vajra", "rapid"]
 
-TAPIS_PATH = "<path to tapis repository>"
-BENCHMARKING_FOLDER = TAPIS_PATH + "/benchmarking/"
+TAPIS_REPO_PATH = "<path to tapis repository>"
+BENCHMARKING_FOLDER = TAPIS_REPO_PATH + "/benchmarking/"
 
 # TAPIS
 TAPIS_PATH = "<path to tapis executable>"
