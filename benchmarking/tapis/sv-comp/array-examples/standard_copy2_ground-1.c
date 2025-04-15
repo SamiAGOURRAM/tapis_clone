@@ -1,0 +1,21 @@
+int main() {
+  int N;
+  assume(N > 0);
+  int a1[N];
+  int a3[N];
+
+  int i;
+  for(i = 0; i < N; i++) {
+    a3[i] = a1[i];
+  }
+  int a2[N];
+  for(i = 0; i < N; i++) {
+    a3[i] = a2[i];
+  }
+
+  for(int x = 0; x < N; x++) {
+    assert(a1[x] == a3[x]);
+  }
+  return 0;
+}
+

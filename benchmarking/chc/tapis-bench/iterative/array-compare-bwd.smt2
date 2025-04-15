@@ -1,0 +1,7 @@
+(set-logic HORN)
+(declare-fun !inv0 (Int (Array Int Int) (Array Int Int) Bool Int ) Bool)
+(assert (forall ((N@0 Int)(array2@0 (Array Int Int))(array1@0 (Array Int Int))(equal@0 Bool)(j@0 Int)) (=> (and (> |N@0| 0) (= |equal@0| true) (= |j@0| |N@0|)) (!inv0 |N@0| |array1@0| |array2@0| |equal@0| |j@0|))))
+(assert (forall ((N@0 Int)(array1@0 (Array Int Int))(array2@0 (Array Int Int))(equal@0 Bool)(j@0 Int)) (=> (and (!inv0 |N@0| |array1@0| |array2@0| |equal@0| |j@0|) (not (> |j@0| 0)) (= |equal@0| true) (not (forall ((k@0 Int)) (=> (and (<= 0 |k@0|) (< |k@0| |N@0|)) (= (select |array1@0| |k@0|) (select |array2@0| |k@0|)))))) false)))
+(assert (forall ((N@0 Int)(array1@0 (Array Int Int))(array2@0 (Array Int Int))(equal@0 Bool)(j@0 Int)(j@1 Int)(equal@1 Bool)) (=> (and (!inv0 |N@0| |array1@0| |array2@0| |equal@1| |j@0|) (= |j@1| (- |j@0| 1)) (> |j@0| 0) (not (= (select |array1@0| (- |j@0| 1)) (select |array2@0| (- |j@0| 1)))) (= |equal@0| false)) (!inv0 |N@0| |array1@0| |array2@0| |equal@0| |j@1|))))
+(assert (forall ((N@0 Int)(array1@0 (Array Int Int))(array2@0 (Array Int Int))(equal@0 Bool)(j@0 Int)(j@1 Int)) (=> (and (!inv0 |N@0| |array1@0| |array2@0| |equal@0| |j@0|) (= |j@1| (- |j@0| 1)) (> |j@0| 0) (not (not (= (select |array1@0| (- |j@0| 1)) (select |array2@0| (- |j@0| 1)))))) (!inv0 |N@0| |array1@0| |array2@0| |equal@0| |j@1|))))
+(check-sat)

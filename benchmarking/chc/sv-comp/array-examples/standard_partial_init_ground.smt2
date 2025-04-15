@@ -1,0 +1,8 @@
+(set-logic HORN)
+(declare-fun !inv0 (Int (Array Int Int) (Array Int Int) (Array Int Int) Int Int ) Bool)
+(assert (forall ((N@0 Int)(A@0 (Array Int Int))(B@0 (Array Int Int))(C@0 (Array Int Int))(i@1 Int)(j@0 Int)) (=> (and (> |N@0| 0) (= |j@0| 0) (= |i@1| 0)) (!inv0 |N@0| |A@0| |B@0| |C@0| |i@1| |j@0|))))
+(assert (forall ((N@0 Int)(A@0 (Array Int Int))(B@0 (Array Int Int))(C@0 (Array Int Int))(i@0 Int)(j@0 Int)) (=> (and (!inv0 |N@0| |A@0| |B@0| |C@0| |i@0| |j@0|) (not (< |i@0| |N@0|)) (not (forall ((x@0 Int)) (=> (and (<= 0 |x@0|) (< |x@0| |j@0|)) (<= (select |C@0| |x@0|) (- (+ |x@0| |i@0|) |j@0|)))))) false)))
+(assert (forall ((N@0 Int)(A@0 (Array Int Int))(B@0 (Array Int Int))(C@0 (Array Int Int))(i@0 Int)(j@0 Int)) (=> (and (!inv0 |N@0| |A@0| |B@0| |C@0| |i@0| |j@0|) (not (< |i@0| |N@0|)) (forall ((x@0 Int)) (=> (and (<= 0 |x@0|) (< |x@0| |j@0|)) (<= (select |C@0| |x@0|) (- (+ |x@0| |i@0|) |j@0|)))) (not (forall ((y@0 Int)) (=> (and (<= 0 |y@0|) (< |y@0| |j@0|)) (>= (select |C@0| |y@0|) |y@0|))))) false)))
+(assert (forall ((N@0 Int)(A@0 (Array Int Int))(B@0 (Array Int Int))(C@0 (Array Int Int))(i@0 Int)(j@0 Int)(i@1 Int)(C@1 (Array Int Int))(j@1 Int)) (=> (and (!inv0 |N@0| |A@0| |B@0| |C@1| |i@0| |j@1|) (= |i@1| (+ |i@0| 1)) (< |i@0| |N@0|) (= (select |A@0| |i@0|) (select |B@0| |i@0|)) (= |C@0| (store |C@1| |j@1| |i@0|)) (= |j@0| (+ |j@1| 1))) (!inv0 |N@0| |A@0| |B@0| |C@0| |i@1| |j@0|))))
+(assert (forall ((N@0 Int)(A@0 (Array Int Int))(B@0 (Array Int Int))(C@0 (Array Int Int))(i@0 Int)(j@0 Int)(i@1 Int)) (=> (and (!inv0 |N@0| |A@0| |B@0| |C@0| |i@0| |j@0|) (= |i@1| (+ |i@0| 1)) (< |i@0| |N@0|) (not (= (select |A@0| |i@0|) (select |B@0| |i@0|)))) (!inv0 |N@0| |A@0| |B@0| |C@0| |i@1| |j@0|))))
+(check-sat)

@@ -1,0 +1,7 @@
+(set-logic HORN)
+(declare-fun !inv0 (Int (Array Int Int) (Array Int Int) Int Bool ) Bool)
+(assert (forall ((SIZE@0 Int)(password@0 (Array Int Int))(guess@0 (Array Int Int))(result@0 Bool)(i@1 Int)) (=> (and (> |SIZE@0| 0) (= |result@0| true) (= |i@1| 0)) (!inv0 |SIZE@0| |password@0| |guess@0| |i@1| |result@0|))))
+(assert (forall ((SIZE@0 Int)(password@0 (Array Int Int))(guess@0 (Array Int Int))(i@0 Int)(result@0 Bool)) (=> (and (!inv0 |SIZE@0| |password@0| |guess@0| |i@0| |result@0|) (not (< |i@0| |SIZE@0|)) |result@0| (not (forall ((x@0 Int)) (=> (and (<= 0 |x@0|) (< |x@0| |SIZE@0|)) (= (select |password@0| |x@0|) (select |guess@0| |x@0|)))))) false)))
+(assert (forall ((SIZE@0 Int)(password@0 (Array Int Int))(guess@0 (Array Int Int))(i@0 Int)(result@0 Bool)(i@1 Int)) (=> (and (!inv0 |SIZE@0| |password@0| |guess@0| |i@0| |result@0|) (= |i@1| (+ |i@0| 1)) (< |i@0| |SIZE@0|) (not (not (= (select |password@0| |i@0|) (select |guess@0| |i@0|))))) (!inv0 |SIZE@0| |password@0| |guess@0| |i@1| |result@0|))))
+(assert (forall ((SIZE@0 Int)(password@0 (Array Int Int))(guess@0 (Array Int Int))(i@0 Int)(result@0 Bool)(i@1 Int)(result@1 Bool)) (=> (and (!inv0 |SIZE@0| |password@0| |guess@0| |i@0| |result@1|) (= |i@1| (+ |i@0| 1)) (< |i@0| |SIZE@0|) (not (= (select |password@0| |i@0|) (select |guess@0| |i@0|))) (= |result@0| false)) (!inv0 |SIZE@0| |password@0| |guess@0| |i@1| |result@0|))))
+(check-sat)

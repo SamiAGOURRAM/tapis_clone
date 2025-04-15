@@ -1,0 +1,6 @@
+(set-logic HORN)
+(declare-fun !inv0 (Int (Array Int Int) Int ) Bool)
+(assert (forall ((SIZE@0 Int)(a@0 (Array Int Int))(a@1 (Array Int Int))(i@1 Int)) (=> (and (> |SIZE@0| 0) (= |i@1| 1) (= |a@1| (store |a@0| 0 7))) (!inv0 |SIZE@0| |a@1| |i@1|))))
+(assert (forall ((SIZE@0 Int)(a@0 (Array Int Int))(i@0 Int)) (=> (and (!inv0 |SIZE@0| |a@0| |i@0|) (not (< |i@0| |SIZE@0|)) (not (forall ((x@0 Int)) (=> (and (<= 1 |x@0|) (< |x@0| |SIZE@0|)) (>= (select |a@0| |x@0|) (select |a@0| (- |x@0| 1))))))) false)))
+(assert (forall ((i@0 Int)(SIZE@0 Int)(a@0 (Array Int Int))(a@1 (Array Int Int))(i@1 Int)) (=> (and (!inv0 |SIZE@0| |a@0| |i@0|) (< |i@0| |SIZE@0|) (= |a@1| (store |a@0| |i@0| (+ (select |a@0| (- |i@0| 1)) 1))) (= |i@1| (+ |i@0| 1))) (!inv0 |SIZE@0| |a@1| |i@1|))))
+(check-sat)
