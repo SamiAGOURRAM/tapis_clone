@@ -1,0 +1,1 @@
+{"name": "array-copy-both-rec.c", "tool": "prophic3", "times": [[4.14, "unsat"], [4.15, "unsat"], [4.18, "unsat"]]}

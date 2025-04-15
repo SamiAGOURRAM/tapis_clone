@@ -1,0 +1,1 @@
+{"name": "array-argmax-bwd.c", "tool": "tapis", "times": [[0.93, "SAFE"], [1.03, "SAFE"], [1.0, "SAFE"]]}

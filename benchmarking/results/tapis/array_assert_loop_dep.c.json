@@ -1,0 +1,1 @@
+{"name": "array_assert_loop_dep.c", "tool": "tapis", "times": [[9.66, "QUANT"], [5.67, "UNSAFE"], [7.03, ""]]}

@@ -1,0 +1,1 @@
+{"name": "array_range_init.c", "tool": "tapis", "times": [[2.0, "UNSAFE"], [2.09, "QUANT"], [2.0, "QUANT"]]}

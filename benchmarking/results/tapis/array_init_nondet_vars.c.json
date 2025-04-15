@@ -1,0 +1,1 @@
+{"name": "array_init_nondet_vars.c", "tool": "tapis", "times": [[6.31, "SAFE"], [6.48, "SAFE"], [7.03, ""]]}

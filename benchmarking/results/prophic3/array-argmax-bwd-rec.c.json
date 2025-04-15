@@ -1,0 +1,1 @@
+{"name": "array-argmax-bwd-rec.c", "tool": "prophic3", "times": [[0.33, "unsat"], [0.33, "unsat"], [0.35, "unsat"]]}

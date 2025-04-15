@@ -1,0 +1,1 @@
+{"name": "array-copy-fwd.c", "tool": "tapis", "times": [[0.41, "SAFE"], [0.64, "SAFE"], [0.4, "SAFE"]]}

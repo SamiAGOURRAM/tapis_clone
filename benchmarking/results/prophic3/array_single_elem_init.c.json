@@ -1,0 +1,1 @@
+{"name": "array_single_elem_init.c", "tool": "prophic3", "times": [[1.2, "unsat"], [1.24, "unsat"], [1.21, "unsat"]]}
