@@ -24,6 +24,16 @@ namespace tapis::HornICE {
     while(true) {
       get_statistics().ice.iterations++;
       auto learner_res = _learner->synthesize(counterexamples);
+
+        std::cout << "--- Learner Proposal ---" << std::endl;
+  if (learner_res.has_value()) {
+      for(auto &[predicate, ld]: *learner_res) {
+          // This will print the predicate name (e.g., !main_summary)
+          // and its proposed invariant (e.g., true)
+          std::cout << predicate->name() << ": " << ld._body << std::endl;
+      }
+  }
+  std::cout << "------------------------" << std::endl;
       if(!learner_res.has_value()) {
         return hcvc::VerifierResponse::UNSAFE;
       }

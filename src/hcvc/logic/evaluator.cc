@@ -263,6 +263,34 @@ namespace hcvc {
       }
       return IntegerLiteral::get(std::to_string(0), args[1]->type(), args[0]->context());
     };
+
+    func_eval_map["sum"] = [](const std::vector<Expr> &args) {
+    // We can only evaluate if the arguments are concrete literals
+    if (args[0]->kind() == TermKind::ArrayLiteral &&
+        args[1]->kind() == TermKind::IntegerLiteral &&
+        args[2]->kind() == TermKind::IntegerLiteral) {
+
+      auto arr_literal = std::dynamic_pointer_cast<ArrayLiteral>(args[0]);
+      auto start_idx = std::stol(std::dynamic_pointer_cast<IntegerLiteral>(args[1])->value());
+      auto end_idx = std::stol(std::dynamic_pointer_cast<IntegerLiteral>(args[2])->value());
+
+      long total = 0;
+      // Sum the elements in the range [start, end)
+      for (long i = start_idx; i < end_idx; ++i) {
+        // Ensure the array element is also a concrete integer
+        if (arr_literal->values()[i]->kind() == TermKind::IntegerLiteral) {
+          auto elem = std::dynamic_pointer_cast<IntegerLiteral>(arr_literal->values()[i]);
+          total += std::stol(elem->value());
+        } else {
+          // Cannot evaluate if an element is symbolic, so return the original expression
+          return args[0]->context().apply("sum", args);
+        }
+      }
+      return IntegerLiteral::get(std::to_string(total), args[0]->context().type_manager().int_type(), args[0]->context());
+    }
+    // If arguments are not concrete, return the original symbolic expression
+    return args[0]->context().apply("sum", args);
+  };
   }
 
   static Expr call_eval_func(const std::string &name, const std::vector<Expr> &args) {

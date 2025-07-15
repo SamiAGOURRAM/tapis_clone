@@ -33,26 +33,48 @@ namespace hcvc {
     return nullptr;
   }
 
-  void To_smtface::visit(std::shared_ptr<OperatorApplication> term) {
+void To_smtface::visit(std::shared_ptr<OperatorApplication> term) {
     std::vector<smtface::Expr> args;
-    const Operator *func = term->operat0r();
-    for(const auto &arg: term->arguments()) {
-      arg->accept(*this);
-      auto r = result();
-      args.push_back(r);
+    const Operator *func = term->operat0r(); // Note: Original typo 'operat0r' is kept
+    for (const auto &arg : term->arguments()) {
+        arg->accept(*this);
+        auto r = result();
+        args.push_back(r);
     }
+
     std::string name = func->name();
-    if(name == "[]") {
-      if(args.size() == 2) {
-        name = "select";
-      } else if(args.size() == 3) {
-        name = "store";
-      }
-    } else if(name == "/") {
-      name = "div";
+
+    if (name == "[]") {
+        if (args.size() == 2) {
+            name = "select";
+        } else if (args.size() == 3) {
+            name = "store";
+        }
+    } else if (name == "/") {
+        name = "div";
+    } else if (name == "sum" || name == "sum_range") {
+        // *** REVISED FIX STARTS HERE ***
+
+        // 1. Define the function's signature for the smtface context.
+        smtface::Sort array_sort = smtface::ArraySort(smtface::INT(), smtface::INT());
+        smtface::Sort int_sort = smtface::INT();
+        std::vector<smtface::Sort> arg_sorts = {array_sort, int_sort, int_sort};
+        smtface::Sort return_sort = int_sort;
+
+        // 2. Ensure the function is declared in the context.
+        //    This registers "sum_range" and its signature. We don't need the return value.
+        _smtface_context.function("sum_range", arg_sorts, return_sort);
+
+        // 3. Now, call the context's standard apply method using the registered name.
+        //    This is consistent with how other operators are handled.
+        _return(_smtface_context.apply("sum_range", args));
+        return; // Important: exit after handling this special case.
+
     }
+    
+    // Original line for all other operators (like '!', '=>', 'and', etc.)
     _return(_smtface_context.apply(name, args));
-  }
+}
 
   void To_smtface::visit(std::shared_ptr<Constant> term) {
     _return(_smtface_context.constant(term->name(), to_smtface(term->type())));

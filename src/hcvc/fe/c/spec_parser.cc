@@ -100,19 +100,30 @@ namespace hcvc::fe::c {
           break;
         case sexpresso::SexpValueKind::STRING:
           auto value = node.value.str;
-          if(value == "true") {
+          if (value == "true") {
             return _context.get_true();
-          } else if(value == "false") {
+          } else if (value == "false") {
             return _context.get_false();
-          } else if(is_number(value)) {
+          } else if (is_number(value)) {
             return hcvc::IntegerLiteral::get(value, _context.type_manager().int_type(), _context);
           } else {
-            auto parameter = _scope->get_variable_by_name(value);
-            const hcvc::Variable *variable = parameter;
-            if(variable == nullptr){
-              return scope[value];
+            // This 'else' block handles variable names
+            
+            // Check if it's a quantified variable first
+            if (scope.count(value)) {
+                return scope.at(value);
+            }
+            
+            // It must be a variable from the C code scope
+            auto variable = _scope->get_variable_by_name(value);
+            if (variable != nullptr) {
+                // get the CURRENT expression for this variable from the scope.
+                return _scope->get(variable);
             } else {
-              return hcvc::VariableConstant::create(variable, 0, _context);
+                // This case should not be reached if the C code is valid.
+                // It means a variable was used in a spec string that doesn't exist.
+                std::cerr << "Error: Unknown identifier '" << value << "' in specification string." << std::endl;
+                exit(1);
             }
           }
       }

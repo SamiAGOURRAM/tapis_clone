@@ -17,25 +17,33 @@ namespace hcvc {
     return result();
   }
 
-  void Printer::visit(std::shared_ptr<OperatorApplication> term) {
-    auto res = "(" + term->operat0r()->name();
-    if(term->operat0r()->name() == "[]") {
-      if(term->arguments().size() == 2) {
-        res = "(select";
-      } else {
-        res = "(store";
-      }
+void Printer::visit(std::shared_ptr<OperatorApplication> term) {
+  std::string res;
+  const auto& op_name = term->operat0r()->name();
+
+  if (op_name == "[]") {
+    if (term->arguments().size() == 2) {
+      res = "(select";
+    } else {
+      res = "(store";
     }
-    for(const auto &arg: term->arguments()) {
-      if(arg != nullptr) {
-        arg->accept(*this);
-        res += " " + result();
-      } else {
-        res += " <null>";
-      }
-    }
-    return _return(res + ")");
+  } else if (op_name == "sum") {
+    res = "(sum_range"; // Translate our internal 'sum' to the SMT 'sum_range'
+  } else {
+    res = "(" + op_name;
   }
+
+  for (const auto &arg : term->arguments()) {
+    if (arg != nullptr) {
+      arg->accept(*this);
+      res += " " + result();
+    } else {
+      res += " <null>";
+    }
+  }
+  return _return(res + ")");
+}
+
 
   inline bool _is_special(char c) {
     return c == '_' || c == '+' || c == '-' || c == '*' || c == '&' || c == '|' || c == '!' || c == '~' || c == '<' ||

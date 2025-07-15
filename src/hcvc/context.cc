@@ -305,6 +305,29 @@ namespace hcvc {
       }
       return types[0];
     }), context);
+
+// sum
+  Operator::create("sum", new LambdaDomain([](const std::vector<const Type *> &types) -> bool {
+    // sum must have 3 arguments: sum(array, start_index, end_index)
+    if (types.size() != 3) {
+      return false;
+    }
+    // The first argument must be an array.
+    if (!types[0]->is_array()) {
+      return false;
+    }
+    // The second and third arguments must be integers.
+    if (!types[1]->is_int() || !types[2]->is_int()) {
+      return false;
+    }
+
+    // The array's elements must also be integers for the sum to be valid.
+    auto array_type = static_cast<const ArrayType *>(types[0]);
+    if (!array_type->element_type()->is_int()) {
+        return false;
+    }
+    return true;
+  }), context.type_manager().int_type(), context);
   }
 
 }

@@ -156,6 +156,9 @@ namespace hcvc::fe::c {
     }
 
     bool compile(clang::Stmt *stmt, hcvc::Function *function) {
+      if (stmt == nullptr) {
+          return false; 
+      }
       if(stmt->getStmtClass() == clang::Stmt::BreakStmtClass) {
         return compile((clang::BreakStmt *) stmt, function);
       } else if(stmt->getStmtClass() == clang::Stmt::CompoundStmtClass) {
@@ -172,8 +175,17 @@ namespace hcvc::fe::c {
         return compile((clang::WhileStmt *) stmt, function);
       } else { // expression statement
         // TODO: this else may take other stuff other than Expression Statement; add other cases
-        compile((clang::Expr *) stmt, function);
-        return false;
+    if (auto *expr = clang::dyn_cast<clang::Expr>(stmt)) {
+      // The cast is safe, we know for sure that stmt is an expression.
+      compile(expr, function);
+      return false;
+    } else {
+      // The statement is some other kind we don't handle.
+      // This is much safer than crashing.
+      stmt->dump();
+      std::cout << "IMPL-MISSING in Stmt compiler: Unhandled statement type." << std::endl;
+      exit(10);
+    }
       }
     }
 
@@ -197,29 +209,48 @@ namespace hcvc::fe::c {
       for(auto decl: stmt->decls()) {
         auto var_decl = dynamic_cast<clang::VarDecl *>(decl);
         if(var_decl->getType()->isArrayType()) {
-          auto var_type = var_decl->getType()->getAsArrayTypeUnsafe();
-          auto array_sort = _context.type_manager().get_array_type(compile_type(var_type->getElementType(), _context));
-          auto variable = hcvc::Variable::create(var_decl->getNameAsString(), array_sort, _context);
-          auto size = compile(((clang::VariableArrayType *) var_type)->getSizeExpr(), function);
-          bool is_size_set = false;
-          if(size->kind() == hcvc::TermKind::Constant) {
-            auto cnst = std::dynamic_pointer_cast<hcvc::Constant>(size);
-            if(cnst->is_variable_constant()) {
-              is_size_set = true;
-              variable->carry_size_variable(
-                  (hcvc::Variable *) std::dynamic_pointer_cast<hcvc::VariableConstant>(cnst)->variable());
-            }
-          }
-          if(!is_size_set) {
-            variable->carry_size_variable();
-          }
-          this->scope().put(variable);
-          if(!is_size_set) {
-            this->scope().put(variable->size_variable());
-            this->assume(this->scope().get(variable->size_variable()) == size);
-          }
-          // TODO: initialized arrays
-        } else {
+  auto var_type = var_decl->getType()->getAsArrayTypeUnsafe();
+  auto array_sort = _context.type_manager().get_array_type(compile_type(var_type->getElementType(), _context));
+  auto variable = hcvc::Variable::create(var_decl->getNameAsString(), array_sort, _context);
+  
+  // =========================================================================
+  // == THIS IS THE CORRECTED LOGIC ==========================================
+  // =========================================================================
+  hcvc::Expr size;
+  if (auto *vla_type = clang::dyn_cast<clang::VariableArrayType>(var_type)) {
+      // It's a Variable Length Array, e.g., int arr[N];
+      size = compile(vla_type->getSizeExpr(), function);
+  } else if (auto *ca_type = clang::dyn_cast<clang::ConstantArrayType>(var_type)) {
+      // It's a Constant Array, e.g., int arr[3];
+      std::string size_str = llvm::toString(ca_type->getSize(), 10, true);
+      size = hcvc::IntegerLiteral::get(size_str, _context.type_manager().int_type(), _context);
+  } else {
+      // Unhandled array type, error out safely.
+      var_type->dump();
+      std::cout << "IMPL-MISSING in DeclStmt compiler: Unhandled array type." << std::endl;
+      exit(10);
+  }
+  // =========================================================================
+
+  bool is_size_set = false;
+  if(size->kind() == hcvc::TermKind::Constant) {
+    auto cnst = std::dynamic_pointer_cast<hcvc::Constant>(size);
+    if(cnst->is_variable_constant()) {
+      is_size_set = true;
+      variable->carry_size_variable(
+          (hcvc::Variable *) std::dynamic_pointer_cast<hcvc::VariableConstant>(cnst)->variable());
+    }
+  }
+  if(!is_size_set) {
+    variable->carry_size_variable();
+  }
+  this->scope().put(variable);
+  if(!is_size_set) {
+    this->scope().put(variable->size_variable());
+    this->assume(this->scope().get(variable->size_variable()) == size);
+  }
+  // TODO: initialized arrays
+} else {
           auto variable = hcvc::Variable::create(var_decl->getNameAsString(),
                                                  compile_type(var_decl->getType(), _context), _context);
           this->scope().put(variable);
@@ -601,104 +632,113 @@ namespace hcvc::fe::c {
     }
 
     hcvc::Expr compile(clang::CallExpr *expr, hcvc::Function *function = nullptr) {
-      if(expr->getDirectCallee()->getName() == "assert_exp") {
-        std::string str = ((clang::StringLiteral *) ((clang::ImplicitCastExpr *) ((clang::ImplicitCastExpr *) *(expr->arguments().begin()))->getSubExpr()))->getString().str();
-        auto frml = SpecParser(str, &this->scope(), _context).parse();
-        this->assure(frml, hcvc::Weakness::assertion_violation);
-        this->assume(frml);
-        return _context.get_false();
-      }
-      if(expr->getDirectCallee()->getName() == "assume_exp") {
-        std::string str = ((clang::StringLiteral *) ((clang::ImplicitCastExpr *) ((clang::ImplicitCastExpr *) *(expr->arguments().begin()))->getSubExpr()))->getString().str();
-        auto frml = SpecParser(str, &this->scope(), _context).parse();
-        this->assume(frml);
-        return _context.get_false();
-      }
-      std::vector<hcvc::Expr> arguments;
-      for(auto arg: expr->arguments()) {
-        auto compiled = compile(arg, function);
-        arguments.push_back(compiled);
-        if(compiled->type()->is_array()) {
-          if(compiled->kind() == hcvc::TermKind::Constant) {
-            auto cnst = std::dynamic_pointer_cast<hcvc::Constant>(compiled);
-            if(cnst->is_variable_constant()) {
-              auto var_cnst = std::dynamic_pointer_cast<hcvc::VariableConstant>(compiled);
-              arguments.push_back(this->scope().get(var_cnst->variable()->size_variable()));
+          auto callee = expr->getDirectCallee();
+    if (!callee) {
+        // Handle indirect function calls if necessary, or error out
+        std::cout << "Error: Indirect function calls are not supported." << std::endl;
+        exit(1);
+    }
+    auto callee_name = callee->getName();
+
+    if (callee_name == "assert_exp" || callee_name == "assume_exp") {
+        if (expr->getNumArgs() > 0) {
+            const clang::Expr *arg = expr->getArg(0)->IgnoreImplicit();
+            if (const auto *str_literal = clang::dyn_cast<clang::StringLiteral>(arg)) {
+                std::string str = str_literal->getString().str();
+                auto frml = SpecParser(str, &this->scope(), _context).parse();
+                if (callee_name == "assert_exp") {
+                    this->assure(frml, hcvc::Weakness::assertion_violation);
+                }
+                this->assume(frml);
+                return _context.get_false();
             }
+        }
+        std::cout << "Error: " << callee_name.str() << " expects a string literal argument." << std::endl;
+        exit(1);
+    }
+    
+    std::vector<hcvc::Expr> arguments;
+    for(auto arg: expr->arguments()) {
+      auto compiled = compile(arg, function);
+      arguments.push_back(compiled);
+      if(compiled->type()->is_array()) {
+        if(compiled->kind() == hcvc::TermKind::Constant) {
+          auto cnst = std::dynamic_pointer_cast<hcvc::Constant>(compiled);
+          if(cnst->is_variable_constant()) {
+            auto var_cnst = std::dynamic_pointer_cast<hcvc::VariableConstant>(compiled);
+            arguments.push_back(this->scope().get(var_cnst->variable()->size_variable()));
           }
         }
       }
-      if(expr->getDirectCallee()->getName() == "assert") {
-        // emit clauses (assertion violated)
-        this->assure(arguments[0], hcvc::Weakness::assertion_violation);
-        this->assume(arguments[0]);
-      } else if(expr->getDirectCallee()->getName() == "assume") {
-        this->assume(arguments[0]);
-      } else if(expr->getDirectCallee()->getName() == "_exists") {
-        // TODO: the problem with this is variable declaration
+    }
+    if(callee->getName() == "assert") {
+      this->assure(arguments[0], hcvc::Weakness::assertion_violation);
+      this->assume(arguments[0]);
+    } else if(callee->getName() == "assume") {
+      this->assume(arguments[0]);
+    } 
+    else if(callee->getName() == "_exists") {
         std::vector<hcvc::Expr> vars;
         for(unsigned int k = 0; k < arguments.size() - 1; k++) {
           vars.push_back(arguments[k]);
         }
         return hcvc::QuantifiedFormula::create(hcvc::Quantifier::Exists, vars, arguments[arguments.size() - 1],
-                                               _context);
-      } else if(expr->getDirectCallee()->getName() == "_forall") {
-        // TODO: the problem with this is variable declaration
+                                              _context);
+      } else if(callee->getName() == "_forall") {
         std::vector<hcvc::Expr> vars;
         for(unsigned int k = 0; k < arguments.size() - 1; k++) {
           vars.push_back(arguments[k]);
         }
         return hcvc::QuantifiedFormula::create(hcvc::Quantifier::ForAll, vars, arguments[arguments.size() - 1],
-                                               _context);
-      } else if(expr->getDirectCallee()->getName() == "_implies") {
+                                              _context);
+      } else if(callee->getName() == "_implies") {
         return _context.apply("=>", arguments);
-      } else if(expr->getDirectCallee()->getName() == "_return") {
+      } else if(callee->getName() == "_return") {
         return hcvc::VariableConstant::create(function->return_variable(), 0, _context);
       } else {
-        auto function = _module.get_function(expr->getDirectCallee()->getName().str());
-        // emit clauses (input satisfies function precondition)
-        this->then(function->precondition_pred(), arguments);
-        // add pre to the clause
-        this->assume(function->precondition_pred(), arguments);
-        // TODO: should not say that the modified parameter and their original have the same size
-        hcvc::Expr returned_value;
-        if(function->return_variable() != nullptr) {
-          returned_value = hcvc::Constant::create("!rtrnd" + std::to_string(_ret_counter++),
-                                                  function->return_type(),
-                                                  _context);
-          arguments.push_back(returned_value);
-        }
-        for(unsigned long i = 0, sizei = function->parameters().size(); i < sizei; i++) {
-          if(function->parameters()[i]->is_modified()) {
-            // retrieve the variable that was passed to this modified parameter
-            auto input = arguments[i];
-            if(input->kind() == hcvc::TermKind::Constant) {
-              auto cnst = std::dynamic_pointer_cast<hcvc::Constant>(input);
-              if(cnst->is_variable_constant()) {
-                auto var_cnst = std::dynamic_pointer_cast<hcvc::VariableConstant>(input);
-                auto variable = (hcvc::Variable *) var_cnst->variable();
-                auto next = std::dynamic_pointer_cast<hcvc::VariableConstant>(
-                    this->scope().get(variable))->next();
-                this->scope().set(variable, next);
-                arguments.push_back(next);
-              } else {
-                std::cout << "IMPL-UNREACH" << "\n";
-                exit(10);
-              }
+      // =========================================================================
+      // == THIS IS THE CORRECTED LINE ===========================================
+      // =========================================================================
+      auto called_function = _module.get_function(callee->getName().str());
+      this->then(called_function->precondition_pred(), arguments);
+      this->assume(called_function->precondition_pred(), arguments);
+      hcvc::Expr returned_value;
+      if(called_function->return_variable() != nullptr) {
+        returned_value = hcvc::Constant::create("!rtrnd" + std::to_string(_ret_counter++),
+                                                called_function->return_type(),
+                                                _context);
+        arguments.push_back(returned_value);
+      }
+      for(unsigned long i = 0, sizei = called_function->parameters().size(); i < sizei; i++) {
+        if(called_function->parameters()[i]->is_modified()) {
+          auto input = arguments[i];
+          if(input->kind() == hcvc::TermKind::Constant) {
+            auto cnst = std::dynamic_pointer_cast<hcvc::Constant>(input);
+            if(cnst->is_variable_constant()) {
+              auto var_cnst = std::dynamic_pointer_cast<hcvc::VariableConstant>(input);
+              auto variable = (hcvc::Variable *) var_cnst->variable();
+              auto next = std::dynamic_pointer_cast<hcvc::VariableConstant>(
+                  this->scope().get(variable))->next();
+              this->scope().set(variable, next);
+              arguments.push_back(next);
             } else {
               std::cout << "IMPL-UNREACH" << "\n";
               exit(10);
             }
+          } else {
+            std::cout << "IMPL-UNREACH" << "\n";
+            exit(10);
           }
         }
-        this->assume(function->summary_pred(), arguments);
-        if(function->return_variable() != nullptr) {
-          return returned_value;
-        } else {
-          return _context.get_true();
-        }
       }
-      return _context.get_false();
+      this->assume(called_function->summary_pred(), arguments);
+      if(called_function->return_variable() != nullptr) {
+        return returned_value;
+      } else {
+        return _context.get_true();
+      }
+    }
+    return _context.get_false();
     }
 
     hcvc::Expr compile(clang::DeclRefExpr *expr, hcvc::Function *function = nullptr) {
@@ -801,6 +841,9 @@ namespace hcvc::fe::c {
         : _context(context), _module(module), _states(std::move(states)) {}
 
     void compile(clang::Stmt *stmt, hcvc::Function *function) {
+        if (stmt == nullptr) {
+    return; // Safely do nothing for an empty statement
+  }
       for(auto state: _states) {
         if(stmt->getStmtClass() == clang::Stmt::CompoundStmtClass) {
           state->compile((clang::CompoundStmt *) stmt, function);
@@ -813,8 +856,15 @@ namespace hcvc::fe::c {
         } else if(stmt->getStmtClass() == clang::Stmt::WhileStmtClass) {
           state->compile((clang::WhileStmt *) stmt, function);
         } else { // expression statement
-          // TODO: this else may take other stuff other than Expression Statement; add other cases
-          state->compile((clang::Expr *) stmt, function);
+if (auto *expr = clang::dyn_cast<clang::Expr>(stmt)) {
+        // The cast is safe, we know for sure that stmt is an expression.
+        state->compile(expr, function);
+      } else {
+        // The statement is some other kind we don't handle.
+        stmt->dump();
+        std::cout << "IMPL-MISSING in MultiStateCompiler: Unhandled statement type." << std::endl;
+        exit(10);
+      }
         }
       }
     }
@@ -921,8 +971,13 @@ namespace hcvc::fe::c {
       sc.compile(func_decl->getBody(), function);
 
       // TODO: or if ... else that has returned
-      if(((clang::CompoundStmt *) func_decl->getBody())->body_back()->getStmtClass() != clang::Stmt::ReturnStmtClass) {
-        state.then(function->summary_pred());
+      auto body = func_decl->getBody();
+      if (body) { // Check if the body is not null
+          // This check is to see if the function has an explicit return statement at the end.
+          // We only perform it if a body exists.
+          if (((clang::CompoundStmt *) body)->body_back()->getStmtClass() != clang::Stmt::ReturnStmtClass) {
+              state.then(function->summary_pred());
+          }
       }
       return;
     }

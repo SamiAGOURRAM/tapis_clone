@@ -9,18 +9,18 @@
 
 namespace smtface::solvers {
 
-  //*-- Z3Solver
-  Z3Solver::Z3Solver(Context &context)
-      : Solver(context), _z3_solver(_z3_context, "UFLIA"), _converter(context, _z3_context) {
-    // TODO: automatically choose the right logic, or give user the choice
-    _z3_context.set(":random-seed", 12);
-    z3::set_param("model.compact", "false");
-  }
+    // The constructor remains the same as the previous correct version.
+    Z3Solver::Z3Solver(Context &context)
+        : Solver(context), _z3_solver(_z3_context, "UFLIA"), _converter(context, _z3_context) {
+        
+        _z3_context.set(":random-seed", 12);
+        z3::set_param("model.compact", "false");
 
+    }
   Z3Solver::~Z3Solver() = default;
 
   std::optional<Model> Z3Solver::get_model(const core::Expr &formula) {
-    _z3_solver.reset();
+    _z3_solver.reset();  
     auto encoded = _converter.encode_expr(formula);
     _z3_solver.add(encoded);
     auto res = _z3_solver.check();
@@ -32,6 +32,7 @@ namespace smtface::solvers {
 
   bool Z3Solver::is_sat(const Expr &formula) {
     _z3_solver.reset();
+    
     auto encoded = _converter.encode_expr(formula);
     _z3_solver.add(encoded);
     auto res = _z3_solver.check();
@@ -69,5 +70,4 @@ namespace smtface::solvers {
     z3::goal result_goal = result_of_elimination[0];
     return _converter.decode_expr(result_goal.as_expr(), scope);
   }
-
 }

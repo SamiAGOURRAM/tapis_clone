@@ -24,6 +24,13 @@ namespace hcvc {
   void ToSMTLIB::transform() {
     std::string result;
     result += "(set-logic HORN)\n";
+result += R"((define-fun-rec sum_range ((a (Array Int Int)) (i Int) (j Int)) Int
+  (ite (>= i j)
+       0
+       (+ (select a (- j 1)) (sum_range a i (- j 1)))
+  )
+)
+)";
     for(auto predicate: _clauses.predicates()) {
       result += "(declare-fun " + predicate->name() + " (";
       for(auto parameter: predicate->parameters()) {

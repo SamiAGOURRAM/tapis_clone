@@ -261,91 +261,121 @@ namespace tapis::HornICE {
     }
   }
 
-  const hcvc::Implication *Teacher::_check(const hcvc::Clause *clause,
-                                           const std::unordered_map<const hcvc::Predicate *, LambdaDefinition> &hypothesis,
-                                           const std::function<hcvc::Expr(
-                                               const hcvc::Expr &)> &size_restriction_func,
-                                           const std::function<hcvc::Expr(
-                                               const hcvc::Expr &)> &array_restriction_func) {
+
+const hcvc::Implication *Teacher::_check(const hcvc::Clause *clause,
+                                         const std::unordered_map<const hcvc::Predicate *, LambdaDefinition> &hypothesis,
+                                         const std::function<hcvc::Expr(
+                                             const hcvc::Expr &)> &size_restriction_func,
+                                         const std::function<hcvc::Expr(
+                                             const hcvc::Expr &)> &array_restriction_func) {
     auto lhs = clause->phi_expr();
     auto rhs = clause->context().get_false();
     auto type_constraints = get_type_constraints(clause, get_bounds()._max_array_size, size_restriction_func,
                                                  array_restriction_func);
     for(const auto &antecedent: clause->antecedent_preds()) {
-      auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(antecedent);
-      std::map<hcvc::Expr, hcvc::Expr> sub_map;
-      for(unsigned long i = 0, size = casted->predicate()->parameters().size(); i < size; i++) {
-        auto param = casted->predicate()->parameters()[i];
-        sub_map[hcvc::VariableConstant::create(param, 0, casted->context())] = casted->arguments()[i];
-      }
-      lhs = lhs && hcvc::substitute(hypothesis.at(casted->predicate()).body(), sub_map);
-      if(get_options().absint.perform) {
-        lhs = lhs && hcvc::substitute(get_outputs().preanalysis_invariants.at(casted->predicate()), sub_map);
-      }
+        auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(antecedent);
+        std::map<hcvc::Expr, hcvc::Expr> sub_map;
+        for(unsigned long i = 0, size = casted->predicate()->parameters().size(); i < size; i++) {
+            auto param = casted->predicate()->parameters()[i];
+            sub_map[hcvc::VariableConstant::create(param, 0, casted->context())] = casted->arguments()[i];
+        }
+
+        if (hypothesis.count(casted->predicate())) {
+            // If a hypothesis exists, use it.
+            lhs = lhs && hcvc::substitute(hypothesis.at(casted->predicate()).body(), sub_map);
+        } else {
+            // Otherwise, the predicate is unknown, so assume it's false.
+            lhs = lhs && clause->context().get_false();
+        }
+
+        if(get_options().absint.perform) {
+            lhs = lhs && hcvc::substitute(get_outputs().preanalysis_invariants.at(casted->predicate()), sub_map);
+        }
     }
     if(clause->consequent()) {
-      auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(*clause->consequent());
-      std::map<hcvc::Expr, hcvc::Expr> sub_map;
-      for(unsigned long i = 0, size = casted->predicate()->parameters().size(); i < size; i++) {
-        auto param = casted->predicate()->parameters()[i];
-        sub_map[hcvc::VariableConstant::create(param, 0, casted->context())] = casted->arguments()[i];
-      }
-      rhs = hcvc::substitute(hypothesis.at(casted->predicate()).body(), sub_map);
+        auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(*clause->consequent());
+        std::map<hcvc::Expr, hcvc::Expr> sub_map;
+        for(unsigned long i = 0, size = casted->predicate()->parameters().size(); i < size; i++) {
+            auto param = casted->predicate()->parameters()[i];
+            sub_map[hcvc::VariableConstant::create(param, 0, casted->context())] = casted->arguments()[i];
+        }
+
+        if (hypothesis.count(casted->predicate())) {
+            // If a hypothesis exists, use it.
+            rhs = hcvc::substitute(hypothesis.at(casted->predicate()).body(), sub_map);
+        } else {
+            // This case should ideally not happen for a consequent, but for safety,
+            // we treat it as false.
+            rhs = clause->context().get_false();
+        }
     }
     if(hcvc::is_true(rhs) || hcvc::is_false(lhs)) {
-      return nullptr;
+        return nullptr;
     }
 #ifndef NDEBUG
     std::cout << "Teacher.check [Fixed N]? " << lhs << " => " << rhs << "\n";
 #endif
     smtface::push_context();
     smtface::solvers::Z3Solver solver(smtface::current_context());
-    //std::cout << smtface::ToString(smtface::utils::array_to_epr((!smtface::Implies(hcvc::to_smtface(lhs), hcvc::to_smtface(rhs))) && hcvc::to_smtface(type_constraints))) << "\n";
-    auto res = solver.get_model(
-        smtface::utils::array_to_epr(
-            (!smtface::Implies(hcvc::to_smtface(lhs), hcvc::to_smtface(rhs))) && hcvc::to_smtface(type_constraints)));
+    auto implication = clause->context().apply("=>", {lhs, rhs});
+    auto hcvc_formula = !implication && type_constraints;
+    auto smt_formula = hcvc::to_smtface(hcvc_formula);
+
+    bool has_sum = false;
+    auto ops = hcvc::get_operations(hcvc_formula);
+    for(auto op: ops) {
+        if(op->name() == "sum") {
+            has_sum = true;
+            break;
+        }
+    }
+
+    std::optional<smtface::Model> res;
+    if(has_sum) {
+        res = solver.get_model(smt_formula);
+    } else {
+        res = solver.get_model(smtface::utils::array_to_epr(smt_formula));
+    }
     get_statistics().smt.queries++;
     if(res) {
-      auto model = *res;
-      //std::cout << std::dynamic_pointer_cast<smtface::solvers::Z3Model>(model)->z3_model() << "\n";
-      std::vector<const hcvc::State *> antecedents;
-      const hcvc::State *consequent = nullptr;
-      for(const auto &antecedent: clause->antecedent_preds()) {
-        auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(antecedent);
-        antecedents.push_back(_extract(casted, model, _state_manager));
-      }
-      if(clause->consequent()) {
-        auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(*clause->consequent());
-        consequent = _extract(casted, model, _state_manager);
-      }
-      auto impl = _state_manager.get_implication(clause, antecedents, consequent);
-#ifndef NDEBUG
-      std::cout << "    - ";
-      unsigned long i = 0;
-      if(!antecedents.empty()) {
-        for(auto state: antecedents) {
-          std::cout << state->hash();
-          if(i != antecedents.size() - 1) {
-            std::cout << ", ";
-          }
+        auto model = *res;
+        std::vector<const hcvc::State *> antecedents;
+        const hcvc::State *consequent = nullptr;
+        for(const auto &antecedent: clause->antecedent_preds()) {
+            auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(antecedent);
+            antecedents.push_back(_extract(casted, model, _state_manager));
         }
-      } else {
-        std::cout << "true";
-      }
-      std::cout << " => ";
-      if(consequent != nullptr) {
-        std::cout << consequent->hash() << "\n";
-      } else {
-        std::cout << "false" << "\n";
-      }
+        if(clause->consequent()) {
+            auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(*clause->consequent());
+            consequent = _extract(casted, model, _state_manager);
+        }
+        auto impl = _state_manager.get_implication(clause, antecedents, consequent);
+#ifndef NDEBUG
+        std::cout << "     - ";
+        unsigned long i = 0;
+        if(!antecedents.empty()) {
+            for(auto state: antecedents) {
+                std::cout << state->hash();
+                if(i != antecedents.size() - 1) {
+                    std::cout << ", ";
+                }
+            }
+        } else {
+            std::cout << "true";
+        }
+        std::cout << " => ";
+        if(consequent != nullptr) {
+            std::cout << consequent->hash() << "\n";
+        } else {
+            std::cout << "false" << "\n";
+        }
 #endif
-      smtface::pop_context();
-      return impl;
+        smtface::pop_context();
+        return impl;
     }
     smtface::pop_context();
     return nullptr;
-  }
-
+}
   std::set<const hcvc::Implication *>
   Teacher::_check(const std::unordered_map<const hcvc::Predicate *, LambdaDefinition> &hypothesis,
                   const std::function<hcvc::Expr(const hcvc::Expr &)> &size_restriction_func,
@@ -363,55 +393,82 @@ namespace tapis::HornICE {
     return counterexamples;
   }
 
-  bool Teacher::_check(const std::unordered_map<const hcvc::Predicate *, LambdaDefinition> &hypothesis) {
+bool Teacher::_check(const std::unordered_map<const hcvc::Predicate *, LambdaDefinition> &hypothesis) {
     for(const auto clause: _clauses) {
-      auto lhs = clause->phi_expr();
-      auto rhs = clause->context().get_false();
-      auto type_constraints = get_type_constraints(clause, 0, [=](const hcvc::Expr &size) {
-        return size->context().get_true();
-      }, [=](const hcvc::Expr &array) {
-        return array->context().get_true();
-      });
-      for(const auto &antecedent: clause->antecedent_preds()) {
-        auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(antecedent);
-        std::map<hcvc::Expr, hcvc::Expr> sub_map;
-        for(unsigned long i = 0, size = casted->predicate()->parameters().size(); i < size; i++) {
-          auto param = casted->predicate()->parameters()[i];
-          sub_map[hcvc::VariableConstant::create(param, 0, casted->context())] = casted->arguments()[i];
+        auto lhs = clause->phi_expr();
+        auto rhs = clause->context().get_false();
+        auto type_constraints = get_type_constraints(clause, 0, [=](const hcvc::Expr &size) {
+            return size->context().get_true();
+        }, [=](const hcvc::Expr &array) {
+            return array->context().get_true();
+        });
+        for(const auto &antecedent: clause->antecedent_preds()) {
+            auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(antecedent);
+            std::map<hcvc::Expr, hcvc::Expr> sub_map;
+            for(unsigned long i = 0, size = casted->predicate()->parameters().size(); i < size; i++) {
+                auto param = casted->predicate()->parameters()[i];
+                sub_map[hcvc::VariableConstant::create(param, 0, casted->context())] = casted->arguments()[i];
+            }
+            if (hypothesis.count(casted->predicate())) {
+                lhs = lhs && hcvc::substitute(hypothesis.at(casted->predicate()).body(), sub_map);
+            } else {
+                lhs = lhs && clause->context().get_false();
+            }
         }
-        lhs = lhs && hcvc::substitute(hypothesis.at(casted->predicate()).body(), sub_map);
-      }
-      if(clause->consequent()) {
-        auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(*clause->consequent());
-        std::map<hcvc::Expr, hcvc::Expr> sub_map;
-        for(unsigned long i = 0, size = casted->predicate()->parameters().size(); i < size; i++) {
-          auto param = casted->predicate()->parameters()[i];
-          sub_map[hcvc::VariableConstant::create(param, 0, casted->context())] = casted->arguments()[i];
+
+        if(clause->consequent()) {
+            auto casted = std::dynamic_pointer_cast<hcvc::PredicateApplication>(*clause->consequent());
+            std::map<hcvc::Expr, hcvc::Expr> sub_map;
+            for(unsigned long i = 0, size = casted->predicate()->parameters().size(); i < size; i++) {
+                auto param = casted->predicate()->parameters()[i];
+                sub_map[hcvc::VariableConstant::create(param, 0, casted->context())] = casted->arguments()[i];
+            }
+            if (hypothesis.count(casted->predicate())) {
+                rhs = hcvc::substitute(hypothesis.at(casted->predicate()).body(), sub_map);
+            } else {
+                rhs = clause->context().get_false();
+            }
         }
-        rhs = hcvc::substitute(hypothesis.at(casted->predicate()).body(), sub_map);
-      }
 #ifndef NDEBUG
-      std::cout << "Teacher.check [Forall N]? " << lhs << " => " << rhs << "\n";
+        std::cout << "Teacher.check [Forall N]? " << lhs << " => " << rhs << "\n";
 #endif
-      smtface::push_context();
-      smtface::solvers::Z3Solver solver(smtface::current_context());
-      //std::cout << smtface::ToString(smtface::utils::array_to_epr((!smtface::Implies(hcvc::to_smtface(lhs), hcvc::to_smtface(rhs))) && hcvc::to_smtface(type_constraints))) << "\n";
-      auto res = solver.get_model(
-          smtface::utils::array_to_epr(
-              (!smtface::Implies(hcvc::to_smtface(lhs), hcvc::to_smtface(rhs))) && hcvc::to_smtface(type_constraints)));
-      get_statistics().smt.queries++;
-      if(res) {
-        auto m = std::dynamic_pointer_cast<smtface::solvers::Z3Model>(*res);
+        smtface::push_context();
+        smtface::solvers::Z3Solver solver(smtface::current_context());
+
+        auto implication = clause->context().apply("=>", {lhs, rhs});
+        auto hcvc_formula = !implication && type_constraints;
+        auto smt_formula = hcvc::to_smtface(hcvc_formula);
+
+        bool has_sum = false;
+        auto ops = hcvc::get_operations(hcvc_formula);
+        for(auto op: ops) {
+            if(op->name() == "sum") {
+                has_sum = true;
+                break;
+            }
+        }
+
+        std::optional<smtface::Model> res;
+        if(has_sum) {
+            res = solver.get_model(smt_formula);
+        } else {
+            res = solver.get_model(smtface::utils::array_to_epr(smt_formula));
+        }
+
+        get_statistics().smt.queries++;
+        if(res) {
+            auto m = std::dynamic_pointer_cast<smtface::solvers::Z3Model>(*res);
 #ifndef NDEBUG
-        std::cout << m->z3_model() << "\n";
+            std::cout << m->z3_model() << "\n";
 #endif
+            smtface::pop_context();
+            return false;
+        }
         smtface::pop_context();
-        return false;
-      }
-      smtface::pop_context();
     }
     return true;
-  }
+}
+
 
   hcvc::Expr get_formula(const std::set<const hcvc::State *> &states, hcvc::Context &context) {
     auto res = context.get_false();

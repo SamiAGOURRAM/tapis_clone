@@ -21,6 +21,10 @@ namespace smtface::utils {
     }
 
     void visit(std::shared_ptr<core::ApplicationTerm> term) override {
+
+      if (term->function()->name() == "sum_range") {
+        return _return(std::make_tuple(false, term));
+      }
       bool changed = false;
       std::vector<Expr> args;
       const Function *func = term->function();
