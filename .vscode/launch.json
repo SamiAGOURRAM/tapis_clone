@@ -1,0 +1,28 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "(gdb) Launch Tapis",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/build/tapis", // Path to your executable
+            "args": [
+                // The command-line arguments for your test case
+                "/home/sami/tapis/benchmarking/tapis/tapis-bench/iterative/array-bubble-sort-fwd.c"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "CMake: build" // Optional: ensures project is built before debugging
+        }
+    ]
+}

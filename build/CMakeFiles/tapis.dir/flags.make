@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/sami/tapis/include -I/home/sami/tapis/external/smtface/include -I/home/sami/tapis/external/rope.hh/include -I/home/sami/tapis/external/sexpresso/sexpresso -I/home/sami/tapis/external/sexpresso/sexpresso_std
 
-CXX_FLAGS = -I/usr/lib/llvm-13/include -g   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
+CXX_FLAGS = -I/usr/lib/llvm-13/include -g -O0   -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -std=gnu++17
 

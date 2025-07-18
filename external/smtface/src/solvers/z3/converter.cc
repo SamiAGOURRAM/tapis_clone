@@ -118,8 +118,36 @@ namespace smtface::solvers {
   }
 
   //*-- Z3Converter
-  Z3Converter::Z3Converter(Context &context, z3::context &z3_context)
-      : _context(context), _z3_context(z3_context), _remembered_z3_expr(z3_context) {}
+Z3Converter::Z3Converter(Context &context, z3::context &z3_context)
+    : _context(context),
+      _z3_context(z3_context),
+      _remembered_z3_expr(z3_context),
+      // Initialize m_sum_range_func with a temporary value. It will be properly defined next.
+      m_sum_range_func(_z3_context.function("temp_sum_name", _z3_context.int_sort(), _z3_context.int_sort())) {
+
+    z3::sort array_sort = _z3_context.array_sort(_z3_context.int_sort(), _z3_context.int_sort());
+    z3::sort int_sort = _z3_context.int_sort();
+    
+    // Use the correct `recfun` overload for your Z3 version
+    const unsigned arity = 3;
+    z3::sort domain[arity] = { array_sort, int_sort, int_sort };
+    // Assign the real recursive function declaration to our member variable
+    m_sum_range_func = z3::recfun("sum_range", arity, domain, int_sort);
+
+    z3::expr a = _z3_context.constant("a_rec", array_sort);
+    z3::expr i = _z3_context.constant("i_rec", int_sort);
+    z3::expr j = _z3_context.constant("j_rec", int_sort);
+    z3::expr_vector params(_z3_context);
+    params.push_back(a);
+    params.push_back(i);
+    params.push_back(j);
+    
+    z3::expr body = z3::ite(i >= j, _z3_context.int_val(0),
+                           z3::select(a, j - 1) + m_sum_range_func(a, i, j - 1));
+
+    // FIX: Use `recdef` as shown in your example. It's a member of z3::context.
+    _z3_context.recdef(m_sum_range_func, params, body);
+}
 
   core::Context &Z3Converter::context() const {
     return _context;
@@ -163,6 +191,15 @@ namespace smtface::solvers {
       }
     } else if(expr->kind() == core::TermKind::Application) {
       auto exprp = std::dynamic_pointer_cast<core::ApplicationTerm>(expr);
+
+    if (exprp->function()->name() == "sum" || exprp->function()->name() == "sum_range") {
+        z3::expr_vector args(_z3_context);
+        for(const auto &arg: exprp->arguments()) {
+            args.push_back(encode_expr(arg, func_decls, func_decl_map));
+        }
+        // Apply the function stored in the converter
+        return m_sum_range_func(args);
+    }
       z3::expr_vector args(_z3_context);
       for(const auto &arg: exprp->arguments()) {
         args.push_back(encode_expr(arg, func_decls, func_decl_map));

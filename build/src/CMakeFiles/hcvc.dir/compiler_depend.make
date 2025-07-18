@@ -2298,7 +2298,8 @@ src/CMakeFiles/hcvc.dir/hcvc/logic/evaluator.cc.o: ../src/hcvc/logic/evaluator.c
   /usr/include/c++/11/iostream \
   /usr/include/c++/11/istream \
   /usr/include/c++/11/bits/istream.tcc \
-  ../include/hcvc/clause/predicate.hh
+  ../include/hcvc/clause/predicate.hh \
+  ../include/hcvc/logic/printer.hh
 
 src/CMakeFiles/hcvc.dir/hcvc/logic/not_eliminator.cc.o: ../src/hcvc/logic/not_eliminator.cc \
   ../include/hcvc/logic/not_eliminator.hh \
@@ -5646,8 +5647,6 @@ src/CMakeFiles/hcvc.dir/hcvc/verifier.cc.o: ../src/hcvc/verifier.cc \
 
 ../src/hcvc/logic/smtface.cc:
 
-../include/hcvc/logic/printer.hh:
-
 ../src/hcvc/logic/printer.cc:
 
 ../src/hcvc/logic/operator.cc:
@@ -5655,6 +5654,8 @@ src/CMakeFiles/hcvc.dir/hcvc/verifier.cc.o: ../src/hcvc/verifier.cc \
 ../include/hcvc/logic/not_eliminator.hh:
 
 ../src/hcvc/logic/not_eliminator.cc:
+
+../include/hcvc/logic/printer.hh:
 
 ../src/hcvc/fe/frontend.cc:
 

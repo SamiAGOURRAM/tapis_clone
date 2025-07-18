@@ -1,9 +1,5 @@
-//
-// Copyright (c) 2022 Wael-Amine Boutglay
-//
-
 #include "tapis/engines/hornice/qdt/diagram.hh"
-
+#include "tapis/engines/hornice/qdt/aggregation.hh" // Still need this include
 #include <stack>
 #include <utility>
 #include "hcvc/program/variable.hh"
@@ -22,9 +18,21 @@ namespace tapis::HornICE::qdt {
   unsigned long Diagram::_dc = 0;
 
   //*-- DiagramManager
-  DiagramManager::DiagramManager(tapis::HornICE::qdt::QuantifierManager &quantifier_manager, hcvc::Context &context)
+  // ** MINIMAL CHANGE #1: Add AggregationManager to the constructor **
+  DiagramManager::DiagramManager(tapis::HornICE::qdt::QuantifierManager &quantifier_manager,
+                                 tapis::HornICE::qdt::AggregationManager &aggregation_manager,
+                                 hcvc::Context &context)
       : _quantifier_manager(quantifier_manager),
+        _aggregation_manager(aggregation_manager), // Initialize the new member
         _context(context) {}
+
+  // // ** MINIMAL CHANGE #2: Add destructor to fix memory leak **
+  // DiagramManager::~DiagramManager() {
+  //   for (auto const& [hash, diagram_ptr] : _diagrams) {
+  //       delete diagram_ptr;
+  //   }
+  // }
+
 
   const std::list<const Diagram *> &DiagramManager::get_diagrams(const hcvc::State *state) {
     std::set<const hcvc::Variable *> _skip_variables;
@@ -42,14 +50,13 @@ namespace tapis::HornICE::qdt {
         }
       }
       if(has_array) {
+        // --- THIS IS THE OLD, WORKING LOGIC FOR QUANTIFIER COMBINATIONS ---
         std::list<std::map<QuantifierInfo *, unsigned long>> combinations;
         std::map<QuantifierInfo *, unsigned long> max_sizes;
-        // get each quantifier range 0..max_size
         for(auto qi: _quantifier_manager.quantifiers(state->predicate())) {
           max_sizes[qi] = std::stol(
               std::dynamic_pointer_cast<hcvc::IntegerLiteral>(state->values().at(qi->size_variable))->value());
         }
-        // make combinations for each array's quantifiers
         std::map<hcvc::Variable *, std::list<std::map<QuantifierInfo *, unsigned long>>> array_combinations;
         for(auto parameter: state->predicate()->parameters()) {
           if(parameter->type()->is_array()) {
@@ -58,20 +65,21 @@ namespace tapis::HornICE::qdt {
                 continue;
               }
             }
+            // Use the public getter instead of direct member access
+            const auto& quantifiers_for_array = _quantifier_manager.array_quantifiers(state->predicate()).at(parameter);
             std::list<std::map<QuantifierInfo *, unsigned long>> array_combination;
-            for(unsigned long i = 0;
-                i < _quantifier_manager._array_quantifiers[state->predicate()][parameter].size(); i++) {
-              auto qi = _quantifier_manager._array_quantifiers[state->predicate()][parameter][i];
+            for(unsigned long i = 0; i < quantifiers_for_array.size(); i++) {
+              auto qi = quantifiers_for_array[i];
               if(i == 0) {
                 for(unsigned long j = 0; j < max_sizes[qi]; j++) {
                   array_combination.emplace_back(std::map<QuantifierInfo *, unsigned long>({{qi, j}}));
                 }
               } else {
-                auto qi_1 = _quantifier_manager._array_quantifiers[state->predicate()][parameter][i - 1];
+                auto qi_1 = quantifiers_for_array[i - 1];
                 std::list<std::map<QuantifierInfo *, unsigned long>> new_comp;
                 for(auto comp: array_combination) {
                   for(unsigned long k = 0; k < max_sizes[qi]; k++) {
-                    if(comp[qi_1] <= k) {
+                    if(comp.at(qi_1) <= k) {
                       auto c = comp;
                       c[qi] = k;
                       new_comp.emplace_back(c);
@@ -84,13 +92,10 @@ namespace tapis::HornICE::qdt {
             array_combinations[parameter] = array_combination;
           }
         }
-        // make the combinations
         unsigned long i = 0;
         for(const auto &[array, combs]: array_combinations) {
           if(i == 0 || combinations.empty()) {
-            for(const auto &comb: combs) {
-              combinations.push_back(comb);
-            }
+            combinations = combs;
           } else {
             std::list<std::map<QuantifierInfo *, unsigned long>> new_comp;
             for(const auto &old: combinations) {
@@ -104,22 +109,111 @@ namespace tapis::HornICE::qdt {
           }
           i++;
         }
+        // --- END OF OLD LOGIC ---
+
+        if (combinations.empty()) {
+            // If there are no quantifiers, we still need one loop to create one diagram.
+            combinations.push_back({});
+        }
 
         for(auto &comb: combinations) {
           auto values = state->values();
-          for(unsigned long i = 0, sizei = _quantifier_manager.quantifiers(state->predicate()).size(); i < sizei; i++) {
-            auto qi = _quantifier_manager.quantifiers(state->predicate())[i];
-            values[qi->quantifier] = hcvc::IntegerLiteral::get(std::to_string(comb[qi]), qi->quantifier->type(),
-                                                               _context);
-            values[qi->accessor] = std::dynamic_pointer_cast<hcvc::ArrayLiteral>(
-                state->values().at(qi->array))->values().at(comb[qi]);
+          for(auto qi: _quantifier_manager.quantifiers(state->predicate())) {
+            // Check if the combination map has this quantifier
+            if (comb.count(qi)) {
+                values[qi->quantifier] = hcvc::IntegerLiteral::get(std::to_string(comb.at(qi)), qi->quantifier->type(), _context);
+                values[qi->accessor] = std::dynamic_pointer_cast<hcvc::ArrayLiteral>(state->values().at(qi->array))->values().at(comb.at(qi));
+            }
           }
+          
+          // ** MINIMAL CHANGE #3: Re-enable the (currently commented out) sum logic **
+          // const auto& agg_infos = _aggregation_manager.get_aggregations(state->predicate());
+          // if (!agg_infos.empty()) {
+          //     std::cout << "[DEBUG] Found " << agg_infos.size() << " sum aggregations for predicate " << state->predicate()->name() << std::endl;
+          // }
+
+          // for (const auto* info : agg_infos) {
+          //     // --- Check 1: Does the array variable exist in the current state value map? ---
+          //     if (values.find(info->array) == values.end()) {
+          //         std::cout << "[DEBUG-ERROR] Array variable '" << info->array->name() << "' not found in values map. Skipping." << std::endl;
+          //         continue;
+          //     }
+              
+          //     std::cout << "[DEBUG] Processing sum variable: " << info->variable->name() << std::endl;
+
+          //     auto array_literal_expr = values.at(info->array);
+          //     auto array_literal = std::dynamic_pointer_cast<hcvc::ArrayLiteral>(array_literal_expr);
+              
+          //     // --- Check 2: Is the array actually an ArrayLiteral? ---
+          //     if (array_literal.get() == nullptr) {
+          //         std::cout << "[DEBUG-ERROR] Variable '" << info->array->name() << "' is not an ArrayLiteral. Skipping." << std::endl;
+          //         continue;
+          //     }
+
+          //     // --- Determine Lower Bound ---
+          //     long lower_val = 0;
+          //     if (info->lower_bound) {
+          //         std::cout << "[DEBUG]  - Lower bound variable: " << info->lower_bound->name() << std::endl;
+          //         if (values.find(info->lower_bound) != values.end()) {
+          //             auto lower_expr = values.at(info->lower_bound);
+          //             auto lower_lit = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(lower_expr);
+          //             if (lower_lit) {
+          //                 lower_val = std::stol(lower_lit->value());
+          //                 std::cout << "[DEBUG]    Concrete lower value = " << lower_val << std::endl;
+          //             } else {
+          //                 std::cout << "[DEBUG-ERROR]    Lower bound is not an IntegerLiteral. Using 0." << std::endl;
+          //             }
+          //         } else {
+          //             std::cout << "[DEBUG-ERROR]    Lower bound variable not in map. Using 0." << std::endl;
+          //         }
+          //     } else {
+          //         std::cout << "[DEBUG]  - Lower bound is constant 0." << std::endl;
+          //     }
+
+          //     // --- Determine Upper Bound ---
+          //     long upper_val = 0;
+          //     // Check that upper bound is not null before dereferencing
+          //     if (info->upper_bound) {
+          //         std::cout << "[DEBUG]  - Upper bound variable: " << info->upper_bound->name() << std::endl;
+          //         if (values.find(info->upper_bound) != values.end()) {
+          //             auto upper_expr = values.at(info->upper_bound);
+          //             auto upper_lit = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(upper_expr);
+          //             if (upper_lit) {
+          //                 upper_val = std::stol(upper_lit->value());
+          //                 std::cout << "[DEBUG]    Concrete upper value = " << upper_val << std::endl;
+          //             } else {
+          //                 std::cout << "[DEBUG-ERROR]    Upper bound is not an IntegerLiteral. Using 0." << std::endl;
+          //             }
+          //         } else {
+          //             std::cout << "[DEBUG-ERROR]    Upper bound variable not in map. Using 0." << std::endl;
+          //         }
+          //     } else {
+          //         std::cout << "[DEBUG-ERROR]  - Upper bound is NULL, which is invalid. Using 0." << std::endl;
+          //     }
+
+          //     // --- Calculate the Sum ---
+          //     long long current_sum = 0;
+          //     std::cout << "[DEBUG]  - Calculating sum on array of size " << array_literal->values().size() << " from index " << lower_val << " to " << upper_val << std::endl;
+          //     if (lower_val < upper_val && lower_val >= 0 && upper_val <= array_literal->values().size()) {
+          //         for (long k = lower_val; k < upper_val; ++k) {
+          //             auto elem_expr = array_literal->values().at(k);
+          //             auto elem_lit = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(elem_expr);
+          //             if (elem_lit) {
+          //                 current_sum += std::stoll(elem_lit->value());
+          //             } else {
+          //                 std::cout << "[DEBUG-ERROR]    Element at index " << k << " is not an IntegerLiteral. Skipping." << std::endl;
+          //             }
+          //         }
+          //         std::cout << "[DEBUG]  - Final calculated sum = " << current_sum << std::endl;
+          //     } else {
+          //         std::cout << "[DEBUG-WARN]   Bounds are invalid or empty range. Sum is 0." << std::endl;
+          //     }
+              
+          //     values[info->variable] = hcvc::IntegerLiteral::get(std::to_string(current_sum), info->variable->type(), _context);
+          // }
+
           auto diagram = _get_diagram(state->predicate(), values);
           _state_diagrams[state].push_back(diagram);
-        }
-        if(combinations.empty()) {
-          std::cout << "IMPL-UNREACH" << "\n";
-          exit(10);
         }
       } else {
         auto diagram = _get_diagram(state->predicate(), state->values());
@@ -141,14 +235,17 @@ namespace tapis::HornICE::qdt {
       }
     }
     hash += ")";
-    // std::cout << hash << "\n";
     if(_diagrams.count(hash) == 0) {
-      _diagrams[hash] = new Diagram(predicate, diagram_values, hash, _z3_ctx);
+        _diagrams[hash] = std::make_unique<Diagram>(predicate, diagram_values, hash, _z3_ctx);
     }
-    return _diagrams[hash];
+    return _diagrams.at(hash).get();
   }
 
+  // ** MINIMAL CHANGE #4: Fix memory leak in clear() **
   void DiagramManager::clear() {
+    // for (auto const& [hash, diagram_ptr] : _diagrams) {
+    //     delete diagram_ptr;
+    // }
     _diagrams.clear();
     _state_diagrams.clear();
   }

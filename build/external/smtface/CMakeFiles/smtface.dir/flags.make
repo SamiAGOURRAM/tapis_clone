@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/sami/tapis/include -I/home/sami/tapis/external/smtface/include
 
-CXX_FLAGS = -I/usr/lib/llvm-13/include -DSMTFACE_Z3 -g -std=gnu++17
+CXX_FLAGS = -I/usr/lib/llvm-13/include -DSMTFACE_Z3 -g -O0 -std=gnu++17
 

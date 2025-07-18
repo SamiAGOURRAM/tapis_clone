@@ -274,6 +274,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o: \
   /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
   /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
   /home/sami/tapis/include/tapis/engines/hornice/qdt/quantifier.hh \
+  /home/sami/tapis/include/tapis/engines/hornice/qdt/aggregation.hh \
   /home/sami/tapis/external/rope.hh/include/rope.hh \
   /home/sami/tapis/include/tapis/engines/outputs.hh \
   /home/sami/tapis/external/smtface/include/smtface/solvers/z3/solver.hh \

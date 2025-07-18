@@ -261,6 +261,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o: \
   /home/sami/tapis/include/hcvc/context.hh \
   /home/sami/tapis/include/hcvc/clause/weakness.hh \
   /home/sami/tapis/include/tapis/engines/hornice/qdt/quantifier.hh \
+  /home/sami/tapis/include/tapis/engines/hornice/qdt/aggregation.hh \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/stack \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/deque \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/bits/stl_deque.h \

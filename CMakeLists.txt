@@ -13,6 +13,7 @@ IF(APPLE)
 ENDIF()
 
 project(tapis)
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 
 set(CMAKE_CXX_STANDARD 17)
 

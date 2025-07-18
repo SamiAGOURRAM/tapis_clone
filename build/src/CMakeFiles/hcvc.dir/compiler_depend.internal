@@ -2307,6 +2307,7 @@ src/CMakeFiles/hcvc.dir/hcvc/logic/evaluator.cc.o
  /usr/include/c++/11/istream
  /usr/include/c++/11/bits/istream.tcc
  /home/sami/tapis/include/hcvc/clause/predicate.hh
+ /home/sami/tapis/include/hcvc/logic/printer.hh
 
 src/CMakeFiles/hcvc.dir/hcvc/logic/not_eliminator.cc.o
  /home/sami/tapis/src/hcvc/logic/not_eliminator.cc

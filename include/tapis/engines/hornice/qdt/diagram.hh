@@ -8,6 +8,7 @@
 #include "hcvc/clause/predicate.hh"
 #include "hcvc/program/state.hh"
 #include "tapis/engines/hornice/qdt/quantifier.hh"
+#include "tapis/engines/hornice/qdt/aggregation.hh"
 
 namespace tapis::HornICE::qdt {
 
@@ -45,7 +46,9 @@ namespace tapis::HornICE::qdt {
   //*-- DiagramManager
   class DiagramManager {
   public:
-    DiagramManager(QuantifierManager &quantifier_manager, hcvc::Context &context);
+    DiagramManager(QuantifierManager &quantifier_manager,
+      AggregationManager &aggregation_manager,
+      hcvc::Context &context);
 
     //*- methods
 
@@ -59,7 +62,8 @@ namespace tapis::HornICE::qdt {
   private:
     hcvc::Context &_context;
     tapis::HornICE::qdt::QuantifierManager &_quantifier_manager;
-    std::map<std::string, const Diagram *> _diagrams;
+    tapis::HornICE::qdt::AggregationManager &_aggregation_manager;
+    std::map<std::string, std::unique_ptr<const Diagram>> _diagrams;
     std::map<const hcvc::State *, std::list<const Diagram *>> _state_diagrams;
     z3::context _z3_ctx;
   };

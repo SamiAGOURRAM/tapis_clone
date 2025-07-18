@@ -8,7 +8,9 @@
 #include "tapis/engines/hornice/hornice.hh"
 #include "tapis/engines/hornice/qdt/learner.hh"
 #include "tapis/engines/hornice/qdt/quantifier.hh"
+#include "tapis/engines/hornice/qdt/aggregation.hh"
 #include "tapis/engines/hornice/qdt/general_qdt/classifier.hh"
+#include <memory>
 
 namespace tapis {
 
@@ -18,7 +20,9 @@ namespace tapis {
 
   HornICEQDT::~HornICEQDT() = default;
 
-  void HornICEQDT::solve() {
+
+void HornICEQDT::solve() {
+    // This predicate extraction logic from your old code is more robust. Let's use it.
     std::set<const hcvc::Predicate *> predicates;
     auto cls = this->clauses().to_set();
     for(auto clause: cls) {
@@ -31,23 +35,47 @@ namespace tapis {
         predicates.insert(casted->predicate());
       }
     }
+
+    // --- Start Manager Setup ---
+
     HornICE::qdt::QuantifierManager quantifier_manager(get_options().ice.qdt.quantifier_numbers);
     quantifier_manager.set_context(this->module()->context());
     quantifier_manager.set_predicates(predicates);
     quantifier_manager.setup();
 
+    // 2. AggregationManager on the stack
+    HornICE::qdt::AggregationManager aggregation_manager(quantifier_manager);
+    aggregation_manager.set_context(this->module()->context());
+    aggregation_manager.set_predicates(predicates);
+    aggregation_manager.setup();
+    
+    // 3. Classifier on the stack
     HornICE::qdt::GeneralQDT::Classifier classifier(this->clauses(), predicates, quantifier_manager);
 
-    auto learner = new HornICE::qdt::Learner(this->module(), this->clauses(), quantifier_manager, &classifier);
+    // 4. Learner on the heap (as before), but now passed references
+    auto learner = new HornICE::qdt::Learner(
+        this->module(), this->clauses(),
+        &quantifier_manager,
+        &aggregation_manager,
+        &classifier
+    );
+
+    // --- End Manager Setup ---
+
     HornICE::HornICE hice(this->module(), this->clauses(), learner);
     auto res = hice.verify();
-    if(res == hcvc::VerifierResponse::SAFE) {
-      std::cout << "SAFE\n";
-    } else if(res == hcvc::VerifierResponse::UNSAFE) {
-      std::cout << "UNSAFE\n";
-    } else {
-      std::cout << "UNKNOWN\n";
-    }
-  }
 
+
+    if (res == hcvc::VerifierResponse::SAFE) {
+        std::cout << "SAFE\n";
+    } else if (res == hcvc::VerifierResponse::UNSAFE) {
+        std::cout << "UNSAFE\n";
+    } else {
+        std::cout << "UNKNOWN\n";
+    }
+
+    delete learner;
+
+
+}
 }

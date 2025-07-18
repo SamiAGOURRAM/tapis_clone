@@ -36,6 +36,8 @@ namespace smtface::solvers {
     z3::sort encode_sort(smtface::Sort sort);
 
     void remember(const core::Expr &expr);
+    z3::func_decl get_sum_range_func() const { return m_sum_range_func; } // Add a getter
+
 
   private:
     core::Context &_context;
@@ -43,6 +45,8 @@ namespace smtface::solvers {
     std::vector<core::Expr> _remembered_expr;
     z3::expr_vector _remembered_z3_expr;
     std::map<unsigned long, unsigned> _remember_map;
+    z3::func_decl m_sum_range_func; 
+
   };
 
 }

@@ -262,4 +262,5 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/classifier.cc.o: \
   /home/sami/tapis/external/smtface/include/smtface/core/context.hh \
   /home/sami/tapis/external/smtface/include/smtface/core/register.hh \
   /home/sami/tapis/external/smtface/include/smtface/core/solver.hh \
-  /home/sami/tapis/include/tapis/engines/hornice/qdt/quantifier.hh
+  /home/sami/tapis/include/tapis/engines/hornice/qdt/quantifier.hh \
+  /home/sami/tapis/include/tapis/engines/hornice/qdt/aggregation.hh

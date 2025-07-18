@@ -19,6 +19,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/tapislib.dir/tapis/engines/hornice/hornice.cc.o.d"
   "CMakeFiles/tapislib.dir/tapis/engines/hornice/learner.cc.o"
   "CMakeFiles/tapislib.dir/tapis/engines/hornice/learner.cc.o.d"
+  "CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o"
+  "CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o.d"
   "CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/classifier.cc.o"
   "CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/classifier.cc.o.d"
   "CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o"

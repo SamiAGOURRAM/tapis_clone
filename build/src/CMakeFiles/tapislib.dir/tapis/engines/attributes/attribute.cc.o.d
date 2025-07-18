@@ -261,4 +261,5 @@ src/CMakeFiles/tapislib.dir/tapis/engines/attributes/attribute.cc.o: \
   /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
   /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
   /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
-  /home/sami/tapis/include/tapis/engines/hornice/qdt/quantifier.hh
+  /home/sami/tapis/include/tapis/engines/hornice/qdt/quantifier.hh \
+  /home/sami/tapis/include/tapis/engines/hornice/qdt/aggregation.hh

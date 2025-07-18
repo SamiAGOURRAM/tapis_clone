@@ -13,6 +13,8 @@ add_library(tapislib STATIC
 
         tapis/engines/attributes/attribute.cc
         tapis/engines/hornice/qdt/classifier.cc
+        tapis/engines/hornice/qdt/aggregation.cc
+
         tapis/engines/hornice/qdt/diagram.cc
         tapis/engines/attributes/enumerator.cc
         tapis/engines/attributes/new_attr_synthesizer.cc

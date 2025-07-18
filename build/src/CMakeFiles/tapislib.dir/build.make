@@ -223,10 +223,24 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/classifier.cc.s: cmake_for
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/classifier.cc.s"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sami/tapis/src/tapis/engines/hornice/qdt/classifier.cc -o CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/classifier.cc.s
 
+src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o: src/CMakeFiles/tapislib.dir/flags.make
+src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o: ../src/tapis/engines/hornice/qdt/aggregation.cc
+src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o"
+	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o -c /home/sami/tapis/src/tapis/engines/hornice/qdt/aggregation.cc
+
+src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Preprocessing CXX source to CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.i"
+	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/sami/tapis/src/tapis/engines/hornice/qdt/aggregation.cc > CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.i
+
+src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green "Compiling CXX source to assembly CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.s"
+	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/sami/tapis/src/tapis/engines/hornice/qdt/aggregation.cc -o CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.s
+
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o: src/CMakeFiles/tapislib.dir/flags.make
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o: ../src/tapis/engines/hornice/qdt/diagram.cc
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_12) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o -c /home/sami/tapis/src/tapis/engines/hornice/qdt/diagram.cc
 
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.i: cmake_force
@@ -240,7 +254,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.s: cmake_force
 src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o: src/CMakeFiles/tapislib.dir/flags.make
 src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o: ../src/tapis/engines/attributes/enumerator.cc
 src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_13) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o -c /home/sami/tapis/src/tapis/engines/attributes/enumerator.cc
 
 src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.i: cmake_force
@@ -254,7 +268,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.s: cmake_forc
 src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o: src/CMakeFiles/tapislib.dir/flags.make
 src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o: ../src/tapis/engines/attributes/new_attr_synthesizer.cc
 src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_14) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o -c /home/sami/tapis/src/tapis/engines/attributes/new_attr_synthesizer.cc
 
 src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.i: cmake_force
@@ -268,7 +282,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.s: 
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.o: src/CMakeFiles/tapislib.dir/flags.make
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.o: ../src/tapis/engines/hornice/qdt/learner.cc
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_15) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.o"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.o -c /home/sami/tapis/src/tapis/engines/hornice/qdt/learner.cc
 
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.i: cmake_force
@@ -282,7 +296,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/learner.cc.s: cmake_force
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.o: src/CMakeFiles/tapislib.dir/flags.make
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.o: ../src/tapis/engines/hornice/qdt/quantifier.cc
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_16) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.o"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.o -c /home/sami/tapis/src/tapis/engines/hornice/qdt/quantifier.cc
 
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.i: cmake_force
@@ -296,7 +310,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/quantifier.cc.s: cmake_for
 src/CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.o: src/CMakeFiles/tapislib.dir/flags.make
 src/CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.o: ../src/tapis/engines/horn_ice_qdt.cc
 src/CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_17) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.o"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.o -c /home/sami/tapis/src/tapis/engines/horn_ice_qdt.cc
 
 src/CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.i: cmake_force
@@ -310,7 +324,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/horn_ice_qdt.cc.s: cmake_force
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o: src/CMakeFiles/tapislib.dir/flags.make
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o: ../src/tapis/engines/hornice/qdt/general_qdt/classifier.cc
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_18) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o -c /home/sami/tapis/src/tapis/engines/hornice/qdt/general_qdt/classifier.cc
 
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.i: cmake_force
@@ -324,7 +338,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.
 src/CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o: src/CMakeFiles/tapislib.dir/flags.make
 src/CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o: ../src/tapis/engines/ai/ai.cc
 src/CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o: src/CMakeFiles/tapislib.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_19) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Building CXX object src/CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o"
 	cd /home/sami/tapis/build/src && /usr/bin/clang++-13 $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT src/CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o -MF CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o.d -o CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o -c /home/sami/tapis/src/tapis/engines/ai/ai.cc
 
 src/CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.i: cmake_force
@@ -348,6 +362,7 @@ tapislib_OBJECTS = \
 "CMakeFiles/tapislib.dir/tapis/engines/hornice/teacher.cc.o" \
 "CMakeFiles/tapislib.dir/tapis/engines/attributes/attribute.cc.o" \
 "CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/classifier.cc.o" \
+"CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o" \
 "CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o" \
 "CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o" \
 "CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o" \
@@ -371,6 +386,7 @@ src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/hornice/learner.cc.
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/hornice/teacher.cc.o
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/attributes/attribute.cc.o
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/classifier.cc.o
+src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/attributes/enumerator.cc.o
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o
@@ -381,7 +397,7 @@ src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/tapis/engines/ai/ai.cc.o
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/build.make
 src/libtapislib.a: src/CMakeFiles/tapislib.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_20) "Linking CXX static library libtapislib.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/sami/tapis/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_21) "Linking CXX static library libtapislib.a"
 	cd /home/sami/tapis/build/src && $(CMAKE_COMMAND) -P CMakeFiles/tapislib.dir/cmake_clean_target.cmake
 	cd /home/sami/tapis/build/src && $(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/tapislib.dir/link.txt --verbose=$(VERBOSE)
 

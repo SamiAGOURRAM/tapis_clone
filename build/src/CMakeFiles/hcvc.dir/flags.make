@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/sami/tapis/include -I/home/sami/tapis/external/smtface/include -I/home/sami/tapis/external/rope.hh/include -I/home/sami/tapis/external/sexpresso/sexpresso -I/home/sami/tapis/external/sexpresso/sexpresso_std
 
-CXX_FLAGS = -I/usr/lib/llvm-13/include -g -std=gnu++17
+CXX_FLAGS = -I/usr/lib/llvm-13/include -g -O0 -std=gnu++17
 

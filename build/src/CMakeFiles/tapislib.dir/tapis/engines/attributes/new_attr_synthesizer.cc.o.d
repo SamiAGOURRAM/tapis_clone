@@ -263,6 +263,7 @@ src/CMakeFiles/tapislib.dir/tapis/engines/attributes/new_attr_synthesizer.cc.o: 
   /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
   /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
   /home/sami/tapis/include/tapis/engines/hornice/qdt/quantifier.hh \
+  /home/sami/tapis/include/tapis/engines/hornice/qdt/aggregation.hh \
   /home/sami/tapis/include/tapis/engines/attributes/enumerator.hh \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/stack \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/deque \

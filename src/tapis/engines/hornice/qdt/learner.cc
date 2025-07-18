@@ -3,21 +3,24 @@
 //
 
 #include "tapis/engines/hornice/qdt/learner.hh"
-
 #include "hcvc/logic/smtface.hh"
 #include "tapis/engines/options.hh"
 
 namespace tapis::HornICE::qdt {
 
   //*-- Learner
-  Learner::Learner(hcvc::Module *module, const hcvc::ClauseSet &clauses, QuantifierManager &quantifier_manager,
-                   Classifier *classifier, bool quantify)
-      : HornICE::Learner(module),
-        _quantifier_manager(quantifier_manager),
-        _diagram_manager(_quantifier_manager, module->context()),
-        _quantify(quantify),
-        _predicates(clauses.predicates()),
-        _classifier(classifier) {}
+Learner::Learner(hcvc::Module *module, const hcvc::ClauseSet &clauses,
+                 QuantifierManager *quantifier_manager,
+                 AggregationManager *aggregation_manager,
+                 Classifier *classifier, bool quantify)
+    : HornICE::Learner(module),
+      _quantifier_manager(quantifier_manager),
+      _aggregation_manager(aggregation_manager),
+      _classifier(classifier),
+      // Initialize the member object _diagram_manager
+      _diagram_manager(*quantifier_manager, *aggregation_manager, module->context()),
+      _quantify(quantify),
+      _predicates(clauses.predicates()) {}       
 
   Learner::~Learner() = default;
 
@@ -60,12 +63,15 @@ namespace tapis::HornICE::qdt {
           break;
         }
       }
-      if(increase_quantifiers) {
+ if(increase_quantifiers) {
 #ifndef NDEBUG
         std::cout << "Number of quantifier variables incremented" << std::endl;
 #endif
         more_quantifier_variable = true;
-        _quantifier_manager.increase(1);
+        _quantifier_manager->increase(1);
+        
+        // Add the necessary resetup for the aggregation manager
+        _aggregation_manager->resetup();
         _diagram_manager.clear();
         _diagram_set = DiagramPartialReachabilityGraph();
         _set = hcvc::PartialReachabilityGraph();
@@ -95,13 +101,22 @@ namespace tapis::HornICE::qdt {
     std::cout << "Learner.propose!" << "\n";
 #endif
     for(auto &[predicate, formula]: solution) {
-      hypothesis.emplace(predicate,
-                         LambdaDefinition(predicate, _quantifier_manager.quantify(predicate, formula, !_quantify)));
+      // **THE LIFTING FIX**
+      // 1. First, lift the array accessors (e.g., !array!k0 -> array[k0])
+      auto lifted_formula = _quantifier_manager->quantify(predicate, formula, !_quantify);
+      
+      // 2. Second, lift the sum aggregations (e.g., !s_array_0_i -> sum(array, 0, i))
+      auto final_formula = lifted_formula; // Use the formula without sum substitution
+      // ===================== ISOLATION STEP END =====================
+
+      hypothesis.emplace(predicate, LambdaDefinition(predicate, final_formula));
+
 #ifndef NDEBUG
       std::cout << "    -" << predicate->name() << ": " << hypothesis.at(predicate).body() << "\n";
 #endif
     }
     return hypothesis;
+
   }
 
 }

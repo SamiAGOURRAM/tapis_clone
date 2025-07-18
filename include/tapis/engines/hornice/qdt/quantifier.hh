@@ -40,6 +40,12 @@ namespace tapis::HornICE::qdt {
       return _injected_access_variables.at(predicate);
     }
 
+      inline const std::map<const hcvc::Variable *, std::vector<QuantifierInfo *>> &
+  array_quantifiers(const hcvc::Predicate *predicate) const {
+      // Use .at() to throw an exception if the predicate is not found, which is better than crashing.
+      return _array_quantifiers.at(predicate);
+  }
+
     //*- methods
 
     inline void set_context(hcvc::Context &context) {

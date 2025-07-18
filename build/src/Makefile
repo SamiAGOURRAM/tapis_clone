@@ -891,6 +891,30 @@ tapis/engines/hornice/learner.cc.s:
 	cd /home/sami/tapis/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/tapislib.dir/build.make src/CMakeFiles/tapislib.dir/tapis/engines/hornice/learner.cc.s
 .PHONY : tapis/engines/hornice/learner.cc.s
 
+tapis/engines/hornice/qdt/aggregation.o: tapis/engines/hornice/qdt/aggregation.cc.o
+.PHONY : tapis/engines/hornice/qdt/aggregation.o
+
+# target to build an object file
+tapis/engines/hornice/qdt/aggregation.cc.o:
+	cd /home/sami/tapis/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/tapislib.dir/build.make src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.o
+.PHONY : tapis/engines/hornice/qdt/aggregation.cc.o
+
+tapis/engines/hornice/qdt/aggregation.i: tapis/engines/hornice/qdt/aggregation.cc.i
+.PHONY : tapis/engines/hornice/qdt/aggregation.i
+
+# target to preprocess a source file
+tapis/engines/hornice/qdt/aggregation.cc.i:
+	cd /home/sami/tapis/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/tapislib.dir/build.make src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.i
+.PHONY : tapis/engines/hornice/qdt/aggregation.cc.i
+
+tapis/engines/hornice/qdt/aggregation.s: tapis/engines/hornice/qdt/aggregation.cc.s
+.PHONY : tapis/engines/hornice/qdt/aggregation.s
+
+# target to generate assembly for a file
+tapis/engines/hornice/qdt/aggregation.cc.s:
+	cd /home/sami/tapis/build && $(MAKE) $(MAKESILENT) -f src/CMakeFiles/tapislib.dir/build.make src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/aggregation.cc.s
+.PHONY : tapis/engines/hornice/qdt/aggregation.cc.s
+
 tapis/engines/hornice/qdt/classifier.o: tapis/engines/hornice/qdt/classifier.cc.o
 .PHONY : tapis/engines/hornice/qdt/classifier.o
 
@@ -1210,6 +1234,9 @@ help:
 	@echo "... tapis/engines/hornice/learner.o"
 	@echo "... tapis/engines/hornice/learner.i"
 	@echo "... tapis/engines/hornice/learner.s"
+	@echo "... tapis/engines/hornice/qdt/aggregation.o"
+	@echo "... tapis/engines/hornice/qdt/aggregation.i"
+	@echo "... tapis/engines/hornice/qdt/aggregation.s"
 	@echo "... tapis/engines/hornice/qdt/classifier.o"
 	@echo "... tapis/engines/hornice/qdt/classifier.i"
 	@echo "... tapis/engines/hornice/qdt/classifier.s"

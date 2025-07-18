@@ -228,4 +228,5 @@ src/CMakeFiles/hcvc.dir/hcvc/logic/evaluator.cc.o: \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/iostream \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/istream \
   /usr/bin/../lib/gcc/x86_64-linux-gnu/11/../../../../include/c++/11/bits/istream.tcc \
-  /home/sami/tapis/include/hcvc/clause/predicate.hh
+  /home/sami/tapis/include/hcvc/clause/predicate.hh \
+  /home/sami/tapis/include/hcvc/logic/printer.hh

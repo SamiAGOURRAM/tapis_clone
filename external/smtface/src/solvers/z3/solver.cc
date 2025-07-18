@@ -15,12 +15,17 @@ namespace smtface::solvers {
         
         _z3_context.set(":random-seed", 12);
         z3::set_param("model.compact", "false");
+        _z3_solver.push(); 
+
 
     }
   Z3Solver::~Z3Solver() = default;
 
   std::optional<Model> Z3Solver::get_model(const core::Expr &formula) {
-    _z3_solver.reset();  
+    _z3_solver.pop();
+    _z3_solver.push();
+
+    
     auto encoded = _converter.encode_expr(formula);
     _z3_solver.add(encoded);
     auto res = _z3_solver.check();
@@ -31,7 +36,11 @@ namespace smtface::solvers {
   }
 
   bool Z3Solver::is_sat(const Expr &formula) {
-    _z3_solver.reset();
+    
+    _z3_solver.pop();
+    _z3_solver.push();
+
+
     
     auto encoded = _converter.encode_expr(formula);
     _z3_solver.add(encoded);

@@ -6,6 +6,9 @@
 
 #include "hcvc/context.hh"
 #include "hcvc/clause/predicate.hh"
+#include "hcvc/logic/printer.hh" // <-- ADD THIS INCLUDE
+#include <iostream>              // <-- ADD THIS INCLUDE
+#include <cstdlib>
 
 namespace hcvc {
 
@@ -265,6 +268,14 @@ namespace hcvc {
     };
 
     func_eval_map["sum"] = [](const std::vector<Expr> &args) {
+
+    Printer printer;
+    std::cout << "[DEBUG] Evaluating sum with " << args.size() << " arguments:" << std::endl;
+    for (size_t i = 0; i < args.size(); ++i) {
+        // We can't easily get the TermKind as a string without modifying more files,
+        // so we will just print the expression string, which is enough to see the problem.
+        std::cout << "  - Arg " << i << ": " << printer.to_string(args[i]) << std::endl;
+    }
     // We can only evaluate if the arguments are concrete literals
     if (args[0]->kind() == TermKind::ArrayLiteral &&
         args[1]->kind() == TermKind::IntegerLiteral &&
@@ -273,6 +284,7 @@ namespace hcvc {
       auto arr_literal = std::dynamic_pointer_cast<ArrayLiteral>(args[0]);
       auto start_idx = std::stol(std::dynamic_pointer_cast<IntegerLiteral>(args[1])->value());
       auto end_idx = std::stol(std::dynamic_pointer_cast<IntegerLiteral>(args[2])->value());
+      std::cout << "[DEBUG] sum was fully evaluated to a concrete value." << std::endl;
 
       long total = 0;
       // Sum the elements in the range [start, end)
@@ -289,6 +301,8 @@ namespace hcvc {
       return IntegerLiteral::get(std::to_string(total), args[0]->context().type_manager().int_type(), args[0]->context());
     }
     // If arguments are not concrete, return the original symbolic expression
+        std::cout << "[DEBUG] sum cannot be fully evaluated. Re-applying symbolic operator." << std::endl;
+
     return args[0]->context().apply("sum", args);
   };
   }
@@ -309,6 +323,22 @@ namespace hcvc {
   }
 
   Expr Evaluator::evaluate(const Expr &expr) {
+    // --- START DEBUGGING EXIT ---
+    // static int eval_call_count = 0; // A counter that persists across calls
+    // eval_call_count++;
+
+    // Printer printer;
+    // std::cout << "[DEBUG] Evaluator::evaluate call #" << eval_call_count << " on: " << printer.to_string(expr) << std::endl;
+
+    // // Let's allow a few thousand evaluations before we decide it's an infinite loop.
+    // // Adjust this number if needed.
+    // if (eval_call_count > 1000) {
+    //     std::cout << "\n[FATAL] Evaluator called too many times. Likely infinite loop. Forcing exit." << std::endl;
+    //     std::cout << "       Problematic expression was: " << printer.to_string(expr) << std::endl;
+    //     exit(1); // Forcefully terminate the entire program with an error code.
+    // }
+    // --- END DEBUGGING EXIT ---
+    
     expr->accept(*this);
     auto res = result();
     return res;
