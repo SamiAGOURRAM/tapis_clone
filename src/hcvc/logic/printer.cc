@@ -71,13 +71,23 @@ void Printer::visit(std::shared_ptr<OperatorApplication> term) {
     return _return("false");
   }
 
+  // void Printer::visit(std::shared_ptr<IntegerLiteral> term) {
+  //   long val = std::stol(term->value());
+  //   if(val < 0) {
+  //     return _return("(- " + std::to_string(-val) + ")");
+  //   }
+  //   return _return(term->value());
+  // }
+
   void Printer::visit(std::shared_ptr<IntegerLiteral> term) {
-    long val = std::stol(term->value());
+    // ** THE FIX: Use stoll to handle the full range of long long. **
+    long long val = std::stoll(term->value()); 
     if(val < 0) {
+      // The logic for printing negative numbers is correct.
       return _return("(- " + std::to_string(-val) + ")");
     }
     return _return(term->value());
-  }
+}
 
   void Printer::visit(std::shared_ptr<ArrayLiteral> term) {
     std::string res = "[";

@@ -21,8 +21,11 @@ namespace tapis {
   HornICEQDT::~HornICEQDT() = default;
 
 
+// In src/tapis/engines/horn_ice_qdt.cc
+// Complete solve() method with proper manager setup
+
 void HornICEQDT::solve() {
-    // This predicate extraction logic from your old code is more robust. Let's use it.
+    // Extract predicates from clauses
     std::set<const hcvc::Predicate *> predicates;
     auto cls = this->clauses().to_set();
     for(auto clause: cls) {
@@ -38,6 +41,7 @@ void HornICEQDT::solve() {
 
     // --- Start Manager Setup ---
 
+    // 1. QuantifierManager on the stack
     HornICE::qdt::QuantifierManager quantifier_manager(get_options().ice.qdt.quantifier_numbers);
     quantifier_manager.set_context(this->module()->context());
     quantifier_manager.set_predicates(predicates);
@@ -49,12 +53,18 @@ void HornICEQDT::solve() {
     aggregation_manager.set_predicates(predicates);
     aggregation_manager.setup();
     
-    // 3. Classifier on the stack
-    HornICE::qdt::GeneralQDT::Classifier classifier(this->clauses(), predicates, quantifier_manager);
+    // 3. Classifier on the stack - now with AggregationManager
+    HornICE::qdt::GeneralQDT::Classifier classifier(
+        this->clauses(), 
+        predicates, 
+        quantifier_manager, 
+        aggregation_manager
+    );
 
-    // 4. Learner on the heap (as before), but now passed references
+    // 4. Learner on the heap, passed references to all managers
     auto learner = new HornICE::qdt::Learner(
-        this->module(), this->clauses(),
+        this->module(), 
+        this->clauses(),
         &quantifier_manager,
         &aggregation_manager,
         &classifier
@@ -65,7 +75,6 @@ void HornICEQDT::solve() {
     HornICE::HornICE hice(this->module(), this->clauses(), learner);
     auto res = hice.verify();
 
-
     if (res == hcvc::VerifierResponse::SAFE) {
         std::cout << "SAFE\n";
     } else if (res == hcvc::VerifierResponse::UNSAFE) {
@@ -75,7 +84,5 @@ void HornICEQDT::solve() {
     }
 
     delete learner;
-
-
 }
 }

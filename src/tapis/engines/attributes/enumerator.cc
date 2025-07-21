@@ -819,6 +819,7 @@ namespace tapis::HornICE::qdt {
   }
 
   bool EnumerationAttributeSynthesizer::generate_attributes(DiagramPartialReachabilityGraph *sample) {
+    std::cout << "Generating attributes for predicates: ";
     for(auto predicate: _predicates) {
       for(auto enumerator: rope::add(_index_enumerators[predicate], _data_enumerators[predicate])) {
         if(!enumerator->has_terminated()) {

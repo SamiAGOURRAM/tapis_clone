@@ -12,8 +12,10 @@ namespace tapis::HornICE::qdt {
   //*-- NewAttributeSynthesizer
   class NewAttributeSynthesizer: public AttributeSynthesizer {
   public:
-    inline explicit NewAttributeSynthesizer(QuantifierManager &quantifier_manager)
-        : _quantifier_manager(quantifier_manager) {}
+    inline explicit NewAttributeSynthesizer(QuantifierManager& quantifier_manager, 
+                         AggregationManager& aggregation_manager)
+      : _quantifier_manager(quantifier_manager),
+        _aggregation_manager(aggregation_manager) {}
 
     ~NewAttributeSynthesizer() override;
 
@@ -35,6 +37,8 @@ namespace tapis::HornICE::qdt {
     std::map<const hcvc::Predicate *, std::vector<Enumerator *>> _index_enumerators;
     std::map<const hcvc::Predicate *, std::vector<Enumerator *>> _data_enumerators;
     QuantifierManager &_quantifier_manager;
+    AggregationManager& _aggregation_manager;  // Add this member
+
   };
 
 }

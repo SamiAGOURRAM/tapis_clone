@@ -272,4 +272,5 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o: \
   /home/sami/tapis/include/hcvc/module.hh \
   /home/sami/tapis/include/hcvc/clause/hypergraph.hh \
   /home/sami/tapis/include/hcvc/clause/set.hh \
-  /home/sami/tapis/include/tapis/engines/options.hh
+  /home/sami/tapis/include/tapis/engines/options.hh \
+  /home/sami/tapis/include/hcvc/logic/printer.hh

@@ -19,7 +19,7 @@ namespace tapis::HornICE::qdt {
   class Classifier {
   public:
     Classifier(const hcvc::ClauseSet &clause_set, std::set<const hcvc::Predicate *> predicates,
-               QuantifierManager &quantifier_manager);
+               QuantifierManager &quantifier_manager, AggregationManager &aggregation_manager);
 
     virtual ~Classifier();
 
@@ -48,6 +48,8 @@ namespace tapis::HornICE::qdt {
     hcvc::ClauseSet _clause_set;
     std::set<const hcvc::Predicate *> _predicates;
     QuantifierManager &_quantifier_manager;
+    AggregationManager& _aggregation_manager;  // Add this member
+
   };
 
 }

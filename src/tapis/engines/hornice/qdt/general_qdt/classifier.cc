@@ -17,10 +17,12 @@ namespace tapis::HornICE::qdt::GeneralQDT {
   //*-- Classifier
   Classifier::Classifier(const hcvc::ClauseSet &clause_set,
                          std::set<const hcvc::Predicate *> predicates,
-                         QuantifierManager &quantifier_manager)
-      : qdt::Classifier(clause_set, std::move(predicates), quantifier_manager),
-        _working_set(nullptr) {
-    _attr_synthesizer = new NewAttributeSynthesizer(this->quantifier_manager());
+                         QuantifierManager &quantifier_manager,
+                         AggregationManager &aggregation_manager)
+      : qdt::Classifier(clause_set, std::move(predicates), quantifier_manager, aggregation_manager),
+        _working_set(nullptr),
+        _aggregation_manager(aggregation_manager) {  // Initialize the member
+    _attr_synthesizer = new NewAttributeSynthesizer(this->quantifier_manager(), _aggregation_manager);
     _attr_synthesizer->set_context(&this->quantifier_manager().context());
     _attr_synthesizer->set_predicate(this->predicates());
     _attr_synthesizer->set_manager(new AttributeManager());
@@ -29,6 +31,15 @@ namespace tapis::HornICE::qdt::GeneralQDT {
 
   Classifier::~Classifier() {
     delete _working_set;
+  }
+
+  void Classifier::resetup_attributes() {
+    delete _attr_synthesizer;
+    _attr_synthesizer = new NewAttributeSynthesizer(this->quantifier_manager(), _aggregation_manager);
+    _attr_synthesizer->set_context(&this->quantifier_manager().context());
+    _attr_synthesizer->set_predicate(this->predicates());
+    _attr_synthesizer->set_manager(new AttributeManager());
+    _attr_synthesizer->setup();
   }
 
   class DTNode {
@@ -58,28 +69,21 @@ namespace tapis::HornICE::qdt::GeneralQDT {
     }
   };
 
-  void Classifier::resetup_attributes() {
-    delete _attr_synthesizer;
-    _attr_synthesizer = new NewAttributeSynthesizer(this->quantifier_manager());
-    _attr_synthesizer->set_context(&this->quantifier_manager().context());
-    _attr_synthesizer->set_predicate(this->predicates());
-    _attr_synthesizer->set_manager(new AttributeManager());
-    _attr_synthesizer->setup();
-  }
-
   std::optional<std::unordered_map<const hcvc::Predicate *, hcvc::Expr>>
   Classifier::classify(const tapis::HornICE::qdt::DiagramPartialReachabilityGraph &diag_set) {
+    std::cout << "inside Classifier::classify\n";
     delete _working_set;
     _working_set = new DiagramPartialReachabilityGraph(diag_set);
 
     // check if attributes are sufficient for classification and generate more otherwise
     while(!are_attributes_sufficient()) {
-      //std::cout << "Call Attribute Synthesizer\n";
       delete _working_set;
       _working_set = new DiagramPartialReachabilityGraph(diag_set);
+      std::cout << "Attributes are not sufficient, generating more...\n";
       if(!_attr_synthesizer->generate_attributes(_working_set)) {
         return std::nullopt;
       }
+      std::cout << "Attributes generated: " << "\n";
     }
     //}
 
@@ -110,6 +114,7 @@ namespace tapis::HornICE::qdt::GeneralQDT {
     for(auto [_, root]: roots) {
       leaves.push_back(root);
     }
+    std::cout << " Learn the trees " << leaves.size() << "\n";
 
     // learn the trees
     while(!leaves.empty()) {

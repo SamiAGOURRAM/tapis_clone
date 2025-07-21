@@ -1,22 +1,36 @@
-// sum_safe_final.c
+//
+// Copyright (c) 2024 Wael-Amine Boutglay
+//
 
-void assume_exp(const char *);
+// Forward declarations for the verification tool's special functions.
+// 'assume' is often a built-in intrinsic for the verifier front-end.
+void assume(int);
 void assert_exp(const char *);
 
 int main() {
-  int a[10];
-  int x;
 
-  // Assume 'x' holds the sum of the first 4 elements.
-  // x = sum(a, 0, 4)
-  assume_exp("(= x (sum a 0 4))");
+  //*-- precondition
+  unsigned int N;
+  // Assume a reasonable, bounded size for the array to make verification tractable.
+  assume(N > 0 && N < 100);
+  int array[N];
 
-  // Update x with the 5th element.
-  // After this, x's value is sum(a, 0, 4) + a[4]
-  x = x + a[4];
+  //*-- computation
+  // A simple C loop to calculate the sum of the array's elements.
+  // The verifier's task is to discover a loop invariant for 's' and 'i'.
+  // The expected invariant is: i <= N && s == sum(array, 0, i)
+  int s = 0;
+  unsigned int i = 0;
+  while(i < N) {
+    s = s + array[i];
+    i = i + 1;
+  }
 
-
-  assert_exp("(= x (sum a 0 5))");
+  //*-- specification
+  // After the loop terminates, the verifier knows that i == N.
+  // The assertion uses the background 'sum' theory (provided to the SMT solver)
+  // to check if the computed value 's' matches the symbolic sum of the entire array.
+  assert_exp("(= s (sum array 0 N))");
 
   return 0;
 }

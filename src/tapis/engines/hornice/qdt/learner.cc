@@ -85,13 +85,17 @@ Learner::Learner(hcvc::Module *module, const hcvc::ClauseSet &clauses,
     std::cout << "Datapoints: " << _set.classifications().size() << " - Diagrams: "
               << _diagram_set.classifications().size() << "\n";
 #endif
-
+    std::cout << "Synthesizing attributes...\n";
     if(more_quantifier_variable) {
       _classifier->resetup_attributes();
     }
 
+    std::cout << "Classifying diagrams...\n";
     auto classifier_res = _classifier->classify(_diagram_set);
+    std::cout << "Classified diagrams: " << classifier_res.has_value() << "\n";
+
     if(!classifier_res.has_value()) {
+      std::cerr << "Classifier failed to classify diagrams." << std::endl;
       return std::nullopt;
     }
 
@@ -106,8 +110,7 @@ Learner::Learner(hcvc::Module *module, const hcvc::ClauseSet &clauses,
       auto lifted_formula = _quantifier_manager->quantify(predicate, formula, !_quantify);
       
       // 2. Second, lift the sum aggregations (e.g., !s_array_0_i -> sum(array, 0, i))
-      auto final_formula = lifted_formula; // Use the formula without sum substitution
-      // ===================== ISOLATION STEP END =====================
+      auto final_formula = _aggregation_manager->substitute(predicate, lifted_formula);
 
       hypothesis.emplace(predicate, LambdaDefinition(predicate, final_formula));
 

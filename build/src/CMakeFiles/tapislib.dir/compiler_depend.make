@@ -3786,7 +3786,8 @@ src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/diagram.cc.o: ../src/tapis
   ../include/hcvc/module.hh \
   ../include/hcvc/clause/hypergraph.hh \
   ../include/hcvc/clause/set.hh \
-  ../include/tapis/engines/options.hh
+  ../include/tapis/engines/options.hh \
+  ../include/hcvc/logic/printer.hh
 
 src/CMakeFiles/tapislib.dir/tapis/engines/hornice/qdt/general_qdt/classifier.cc.o: ../src/tapis/engines/hornice/qdt/general_qdt/classifier.cc \
   ../include/tapis/engines/hornice/qdt/general_qdt/classifier.hh \
@@ -5454,6 +5455,8 @@ src/CMakeFiles/tapislib.dir/tapis/engines/statistics.cc.o: ../src/tapis/engines/
 ../src/tapis/engines/hornice/qdt/quantifier.cc:
 
 ../src/tapis/engines/hornice/qdt/general_qdt/classifier.cc:
+
+../include/hcvc/logic/printer.hh:
 
 ../src/tapis/engines/hornice/qdt/diagram.cc:
 

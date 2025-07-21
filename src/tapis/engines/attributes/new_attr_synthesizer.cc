@@ -377,9 +377,12 @@ namespace tapis::HornICE::qdt {
     _predicates = predicates;
   }
 
-  void NewAttributeSynthesizer::setup() {
+// In src/tapis/engines/attributes/new_attr_synthesizer.cc
+// Complete setup() method with aggregation support
+
+void NewAttributeSynthesizer::setup() {
     ProgramTermAnalyzer pta;
-    // This has to be performed anyway at least to obtain constants in the program
+    // This has to be performed anyway to obtain constants in the program
     pta.analyze(get_outputs().clauses);
 
     // set the array size bound to the max integer constant in the program + 1
@@ -402,8 +405,10 @@ namespace tapis::HornICE::qdt {
       std::vector<hcvc::Expr> booleans;
       std::vector<hcvc::Expr> datas;
       std::vector<hcvc::Expr> indexes;
+      std::vector<hcvc::Expr> sums;  // Separate vector for sum variables
       std::vector<hcvc::Expr> int_quantifier_variables;
 
+      // Process potential index terms from program analysis
       for(auto &term: pta._potential_index_terms) {
         auto cnsts = hcvc::get_constants(term);
         bool can = true;
@@ -425,6 +430,7 @@ namespace tapis::HornICE::qdt {
         }
       }
 
+      // Process predicate parameters
       auto &variables = predicate->parameters();
       for(auto variable: variables) {
         if(variable->type()->is_bool()) {
@@ -440,6 +446,8 @@ namespace tapis::HornICE::qdt {
           }
         }
       }
+      
+      // Process quantifier variables (following the pattern)
       for(auto qi: _quantifier_manager.quantifiers(predicate)) {
         auto qac = hcvc::VariableConstant::create(qi->quantifier, 0, this->context());
         indexes.push_back(qac);
@@ -450,34 +458,71 @@ namespace tapis::HornICE::qdt {
           datas.push_back(hcvc::VariableConstant::create(qi->accessor, 0, this->context()));
         }
       }
+      
+      // Process aggregation variables (same pattern as quantifier loop)
+      // for(auto ai: _aggregation_manager.get_aggregations(predicate)) {
+      //   auto sum_var = hcvc::VariableConstant::create(ai->variable, 0, this->context());
+      //   sums.push_back(sum_var);
+      // }
+      
+      // Handle mix_data_indexes option
       if(get_options().ice.learner.mix_data_indexes) {
         indexes.insert(indexes.end(), datas.begin(), datas.end());
+        indexes.insert(indexes.end(), sums.begin(), sums.end());  // Also mix in sums
         datas.clear();
+        sums.clear();
       }
 
+      // Create enumerators for booleans
       _data_enumerators[predicate].push_back(
           new BooleanEnumerator(predicate, booleans, attribute_manager(), context()));
+      
+      // Create enumerators for index domains
       for(auto domain: get_options().ice.learner.index_domains) {
         if(domain != AttributeDomain::Kmod0) {
           _index_enumerators[predicate].push_back(
               create_enumerator(domain, predicate, indexes, attribute_manager(), context()));
         }
       }
+      
+      // Create enumerators for sum variables (if not mixed)
+      // Sums work best with: Interval, DifferenceBound, Octagon, Polyhedra
+      if(!get_options().ice.learner.mix_data_indexes && !sums.empty()) {
+        for(auto domain: get_options().ice.learner.index_domains) {
+          if(domain == AttributeDomain::Interval || 
+             domain == AttributeDomain::DifferenceBound ||
+             domain == AttributeDomain::Octagon ||
+             domain == AttributeDomain::Polyhedra) {
+            _index_enumerators[predicate].push_back(
+                create_enumerator(domain, predicate, sums, attribute_manager(), context()));
+          }
+        }
+      }
+      
+      // Handle Kmod0 specially (only for quantifier variables)
       if(get_options().ice.learner.index_domains.count(AttributeDomain::Kmod0)) {
         _index_enumerators[predicate].push_back(
             create_enumerator(AttributeDomain::Kmod0, predicate, int_quantifier_variables, attribute_manager(),
                               context()));
       }
+      
+      // Create enumerators for data domains
       for(auto domain: get_options().ice.learner.data_domains) {
         _data_enumerators[predicate].push_back(
             create_enumerator(domain, predicate, datas, attribute_manager(), context()));
       }
+      
+      // Handle pattern-based attributes
       if(get_options().ice.learner.attr_from_program) {
         for(auto &pattern: pta._attribute_pattern) {
+          // Include sums in pattern enumerator
+          auto pattern_terms = indexes;
+          if(!get_options().ice.learner.mix_data_indexes && !sums.empty()) {
+            pattern_terms.insert(pattern_terms.end(), sums.begin(), sums.end());
+          }
           _index_enumerators[predicate].push_back(
-              new PatternEnumerator(pattern, predicate, indexes, datas, pta._integer_values, attribute_manager(),
+              new PatternEnumerator(pattern, predicate, pattern_terms, datas, pta._integer_values, attribute_manager(),
                                     context()));
-
         }
       }
     }
