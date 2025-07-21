@@ -268,12 +268,9 @@ namespace hcvc {
     };
 
     func_eval_map["sum"] = [](const std::vector<Expr> &args) {
-
     Printer printer;
-    std::cout << "[DEBUG] Evaluating sum with " << args.size() << " arguments:" << std::endl;
+    std::cout << "[DEBUG] Evaluating sum_range with " << args.size() << " arguments:" << std::endl;
     for (size_t i = 0; i < args.size(); ++i) {
-        // We can't easily get the TermKind as a string without modifying more files,
-        // so we will just print the expression string, which is enough to see the problem.
         std::cout << "  - Arg " << i << ": " << printer.to_string(args[i]) << std::endl;
     }
     // We can only evaluate if the arguments are concrete literals
@@ -284,26 +281,29 @@ namespace hcvc {
       auto arr_literal = std::dynamic_pointer_cast<ArrayLiteral>(args[0]);
       auto start_idx = std::stol(std::dynamic_pointer_cast<IntegerLiteral>(args[1])->value());
       auto end_idx = std::stol(std::dynamic_pointer_cast<IntegerLiteral>(args[2])->value());
-      std::cout << "[DEBUG] sum was fully evaluated to a concrete value." << std::endl;
-
-      long total = 0;
+      
+      long long total = 0;
       // Sum the elements in the range [start, end)
-      for (long i = start_idx; i < end_idx; ++i) {
-        // Ensure the array element is also a concrete integer
-        if (arr_literal->values()[i]->kind() == TermKind::IntegerLiteral) {
-          auto elem = std::dynamic_pointer_cast<IntegerLiteral>(arr_literal->values()[i]);
-          total += std::stol(elem->value());
-        } else {
-          // Cannot evaluate if an element is symbolic, so return the original expression
-          return args[0]->context().apply("sum", args);
+      // Add safety checks for the bounds
+      if (start_idx >= 0 && static_cast<size_t>(end_idx) <= arr_literal->values().size() && start_idx <= end_idx) {
+        for (long i = start_idx; i < end_idx; ++i) {
+            // Ensure the array element is also a concrete integer
+            if (arr_literal->values()[i]->kind() == TermKind::IntegerLiteral) {
+              auto elem = std::dynamic_pointer_cast<IntegerLiteral>(arr_literal->values()[i]);
+              total += std::stol(elem->value());
+            } else {
+              // Cannot evaluate if an element is symbolic, so return the original expression
+              std::cout << "[DEBUG] sum_range cannot be fully evaluated (non-literal element). Re-applying symbolic operator." << std::endl;
+              return args[0]->context().apply("sum_range", args);
+            }
         }
+        std::cout << "[DEBUG] sum_range was fully evaluated to: " << total << std::endl;
+        return IntegerLiteral::get(std::to_string(total), args[0]->context().type_manager().int_type(), args[0]->context());
       }
-      return IntegerLiteral::get(std::to_string(total), args[0]->context().type_manager().int_type(), args[0]->context());
     }
-    // If arguments are not concrete, return the original symbolic expression
-        std::cout << "[DEBUG] sum cannot be fully evaluated. Re-applying symbolic operator." << std::endl;
-
-    return args[0]->context().apply("sum", args);
+    // If arguments are not concrete, or bounds are invalid, return the original symbolic expression
+    std::cout << "[DEBUG] sum_range cannot be fully evaluated. Re-applying symbolic operator." << std::endl;
+    return args[0]->context().apply("sum_range", args);
   };
   }
 

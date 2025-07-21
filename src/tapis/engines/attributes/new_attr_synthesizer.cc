@@ -17,13 +17,20 @@ namespace tapis::HornICE::qdt {
   //*-- TermPattern
   class TermPattern {
   public:
-    inline TermPattern(std::vector<hcvc::Expr> index_parameters, std::vector<hcvc::Expr> data_parameters,
-                       std::vector<hcvc::Expr> integer_parameters, hcvc::Expr formula)
-        : _index_parameters(std::move(index_parameters)),
+    inline TermPattern(std::vector<hcvc::Expr> array_parameters,
+      std::vector<hcvc::Expr> index_parameters,
+      std::vector<hcvc::Expr> data_parameters,
+      std::vector<hcvc::Expr> integer_parameters, 
+      hcvc::Expr formula)
+
+        : _array_parameters(std::move(array_parameters)),
+        _index_parameters(std::move(index_parameters)),
           _data_parameters(std::move(data_parameters)),
           _integer_parameters(std::move(integer_parameters)),
           _formula(std::move(formula)) {}
 
+
+    std::vector<hcvc::Expr> _array_parameters; // <-- ADD
     std::vector<hcvc::Expr> _index_parameters;
     std::vector<hcvc::Expr> _data_parameters;
     std::vector<hcvc::Expr> _integer_parameters;
@@ -95,7 +102,7 @@ namespace tapis::HornICE::qdt {
 #ifndef NDEBUG
       std::cout << "Extracted pattern: " << r.second << "\n";
 #endif
-      return {_index_parameters, _data_parameters, _integer_parameters, r.second};
+      return {_array_parameters, _index_parameters, _data_parameters, _integer_parameters, r.second};
     }
 
     void visit(std::shared_ptr<hcvc::OperatorApplication> term) override {
@@ -131,6 +138,9 @@ namespace tapis::HornICE::qdt {
     void visit(std::shared_ptr<hcvc::Constant> term) override {
       if(term->is_variable_constant()) {
         auto variable = std::dynamic_pointer_cast<hcvc::VariableConstant>(term)->variable();
+        if (variable->type()->is_array()) {
+        return _return(true, _new_array_parameter(term->type()));
+    } 
         if(variable->is_data()) {
           return _return(true, _new_data_parameter(term->type()));
         } else {
@@ -157,6 +167,15 @@ namespace tapis::HornICE::qdt {
     void visit(std::shared_ptr<hcvc::PredicateApplication> term) override {}
 
   private:
+    std::vector<hcvc::Expr> _array_parameters; 
+
+      hcvc::Expr _new_array_parameter(const hcvc::Type* type) {
+      // Use a distinct prefix like "!pa!" for "pattern array"
+      auto c = hcvc::Constant::create("!pa!" + std::to_string(counterforpattern++), type, _context);
+      _array_parameters.push_back(c);
+      return c;
+    }
+
     hcvc::Expr _new_data_parameter(const hcvc::Type *type) {
       auto c = hcvc::Constant::create("!pd!" + std::to_string(counterforpattern++), type, _context);
       _data_parameters.push_back(c);
@@ -264,11 +283,13 @@ namespace tapis::HornICE::qdt {
   //*-- PatternEnumerator
   class PatternEnumerator: public Enumerator {
   public:
-    PatternEnumerator(TermPattern pattern, const hcvc::Predicate *predicate, std::vector<hcvc::Expr> index_terms,
+    PatternEnumerator(TermPattern pattern, const hcvc::Predicate *predicate,std::vector<hcvc::Expr> array_terms,
+ std::vector<hcvc::Expr> index_terms,
                       std::vector<hcvc::Expr> data_terms,
                       std::set<long> values, AttributeManager &attribute_manager, hcvc::Context &context)
         : Enumerator(predicate, {}, attribute_manager, context),
           _pattern(std::move(pattern)),
+          _array_terms(std::move(array_terms)),
           _index_terms(std::move(index_terms)),
           _data_terms(std::move(data_terms)),
           _values(std::move(values)),
@@ -289,79 +310,131 @@ namespace tapis::HornICE::qdt {
       return this->is_finite();
     }
 
-    void enumerate() override {
-      std::list<std::tuple<std::vector<hcvc::Expr>, std::vector<hcvc::Expr>, std::vector<hcvc::Expr>>> assignments = {
-          {}};
-      for(unsigned long i = 0, lengthi = _pattern._index_parameters.size()
-                                         + _pattern._data_parameters.size()
-                                         + _pattern._integer_parameters.size(); i < lengthi; i++) {
-        std::list<std::tuple<std::vector<hcvc::Expr>, std::vector<hcvc::Expr>, std::vector<hcvc::Expr>>> new_assignments;
-        if(i < _pattern._index_parameters.size()) {
-          for(auto &term: _index_terms) {
-            for(auto assignment: assignments) {
-              std::get<0>(assignment).push_back(term);
-              new_assignments.push_back(assignment);
-            }
-          }
-        } else if(i < _pattern._index_parameters.size() + _pattern._data_parameters.size()) {
-          for(auto &term: _data_terms) {
-            for(auto assignment: assignments) {
-              std::get<1>(assignment).push_back(term);
-              new_assignments.push_back(assignment);
-            }
-          }
-        } else {
-          for(auto value: _values) {
-            auto term = hcvc::IntegerLiteral::get(std::to_string(value), context().type_manager().int_type(),
-                                                  context());
-            for(auto assignment: assignments) {
-              std::get<2>(assignment).push_back(term);
-              new_assignments.push_back(assignment);
-            }
-          }
-          for(unsigned long j = 0; j < _bound; j++) {
-            auto term = hcvc::IntegerLiteral::get(std::to_string((long) j), context().type_manager().int_type(),
-                                                  context());
-            for(auto assignment: assignments) {
-              std::get<2>(assignment).push_back(term);
-              new_assignments.push_back(assignment);
-            }
-            term = hcvc::IntegerLiteral::get(std::to_string(-((long) j)), context().type_manager().int_type(),
-                                             context());
-            for(auto assignment: assignments) {
-              std::get<2>(assignment).push_back(term);
-              new_assignments.push_back(assignment);
-            }
-          }
-        }
-        assignments = new_assignments;
-      }
+void enumerate() override {
+  // The tuple now has 4 slots to hold assignments for each parameter type.
+  using AssignmentTuple = std::tuple<
+      std::vector<hcvc::Expr>, // 0: Array assignments
+      std::vector<hcvc::Expr>, // 1: Index assignments
+      std::vector<hcvc::Expr>, // 2: Data assignments
+      std::vector<hcvc::Expr>  // 3: Integer assignments
+  >;
 
-      for(auto &assignment: assignments) {
-        std::map<hcvc::Expr, hcvc::Expr> substitue_map;
-        for(unsigned long i = 0, lengthi = _pattern._index_parameters.size()
-                                           + _pattern._data_parameters.size()
-                                           + _pattern._integer_parameters.size(); i < lengthi; i++) {
-          if(i < _pattern._index_parameters.size()) {
-            substitue_map[_pattern._index_parameters[i]] = std::get<0>(assignment)[i];
-          } else if(i < _pattern._index_parameters.size() + _pattern._data_parameters.size()) {
-            auto j = i - _pattern._index_parameters.size();
-            substitue_map[_pattern._data_parameters[j]] = std::get<1>(assignment)[j];
-          } else {
-            auto j = i - _pattern._index_parameters.size() - _pattern._data_parameters.size();
-            substitue_map[_pattern._integer_parameters[j]] = std::get<2>(assignment)[j];
-          }
-        }
-        auto f = hcvc::substitute(_pattern._formula, substitue_map);
-        auto attribute = attribute_manager().get_attribute(predicate(), f);
-        _attributes.insert(attribute);
-      }
+  // Start with a single empty assignment.
+  std::list<AssignmentTuple> assignments = {{}};
 
-      _bound++;
+  // Calculate the total number of parameters to assign.
+  unsigned long array_param_count = _pattern._array_parameters.size();
+  unsigned long index_param_count = _pattern._index_parameters.size();
+  unsigned long data_param_count = _pattern._data_parameters.size();
+  unsigned long int_param_count = _pattern._integer_parameters.size();
+
+  unsigned long total_params = array_param_count + index_param_count + data_param_count + int_param_count;
+
+  // This loop iterates through each placeholder (`!pa!`, `!pi!`, etc.) one by one
+  // and expands the list of assignments for it.
+  for (unsigned long i = 0; i < total_params; i++) {
+    std::list<AssignmentTuple> new_assignments;
+
+    // Case 1: Assigning an Array Parameter (`!pa!`)
+    if (i < array_param_count) {
+      for (auto &term : _array_terms) {
+        for (const auto& assignment : assignments) {
+          auto new_assignment = assignment; // Make a copy
+          std::get<0>(new_assignment).push_back(term);
+          new_assignments.push_back(new_assignment);
+        }
+      }
     }
+    // Case 2: Assigning an Index Parameter (`!pi!`)
+    else if (i < array_param_count + index_param_count) {
+      for (auto &term : _index_terms) {
+        for (const auto& assignment : assignments) {
+          auto new_assignment = assignment; // Make a copy
+          std::get<1>(new_assignment).push_back(term);
+          new_assignments.push_back(new_assignment);
+        }
+      }
+    }
+    // Case 3: Assigning a Data Parameter (`!pd!`)
+    else if (i < array_param_count + index_param_count + data_param_count) {
+      for (auto &term : _data_terms) {
+        for (const auto& assignment : assignments) {
+          auto new_assignment = assignment; // Make a copy
+          std::get<2>(new_assignment).push_back(term);
+          new_assignments.push_back(new_assignment);
+        }
+      }
+    }
+    // Case 4: Assigning an Integer Literal Parameter
+    else {
+      // Add integer constants found in the program
+      for (auto value : _values) {
+        auto term = hcvc::IntegerLiteral::get(std::to_string(value), context().type_manager().int_type(), context());
+        for (const auto& assignment : assignments) {
+          auto new_assignment = assignment; // Make a copy
+          std::get<3>(new_assignment).push_back(term);
+          new_assignments.push_back(new_assignment);
+        }
+      }
+      // Add small integer constants (0, +/-1, +/-2, ...) up to the current bound
+      for (unsigned long j = 0; j < _bound; j++) {
+        // Positive value
+        auto term_pos = hcvc::IntegerLiteral::get(std::to_string((long)j), context().type_manager().int_type(), context());
+        for (const auto& assignment : assignments) {
+          auto new_assignment = assignment; // Make a copy
+          std::get<3>(new_assignment).push_back(term_pos);
+          new_assignments.push_back(new_assignment);
+        }
+        // Negative value (if not zero)
+        if (j > 0) {
+            auto term_neg = hcvc::IntegerLiteral::get(std::to_string(-((long)j)), context().type_manager().int_type(), context());
+            for (const auto& assignment : assignments) {
+              auto new_assignment = assignment; // Make a copy
+              std::get<3>(new_assignment).push_back(term_neg);
+              new_assignments.push_back(new_assignment);
+            }
+        }
+      }
+    }
+    // Replace the old list of assignments with the newly expanded one.
+    assignments = new_assignments;
+  }
+
+  // Now that all combinations have been generated, create the attributes.
+  for (const auto &assignment : assignments) {
+    std::map<hcvc::Expr, hcvc::Expr> substitute_map;
+
+    // Substitute array parameters
+    for (unsigned long i = 0; i < array_param_count; i++) {
+      substitute_map[_pattern._array_parameters[i]] = std::get<0>(assignment)[i];
+    }
+    // Substitute index parameters
+    for (unsigned long i = 0; i < index_param_count; i++) {
+      substitute_map[_pattern._index_parameters[i]] = std::get<1>(assignment)[i];
+    }
+    // Substitute data parameters
+    for (unsigned long i = 0; i < data_param_count; i++) {
+      substitute_map[_pattern._data_parameters[i]] = std::get<2>(assignment)[i];
+    }
+    // Substitute integer parameters
+    for (unsigned long i = 0; i < int_param_count; i++) {
+      substitute_map[_pattern._integer_parameters[i]] = std::get<3>(assignment)[i];
+    }
+
+    // Perform the substitution on the formula template
+    auto f = hcvc::substitute(_pattern._formula, substitute_map);
+    // Get or create the attribute and add it to the set of generated attributes
+    auto attribute = attribute_manager().get_attribute(predicate(), f);
+    _attributes.insert(attribute);
+  }
+
+  // Increment the bound for the next enumeration round (for integer constants).
+  _bound++;
+}
 
   private:
     TermPattern _pattern;
+    std::vector<hcvc::Expr> _array_terms; // <-- ADD
     std::vector<hcvc::Expr> _index_terms;
     std::vector<hcvc::Expr> _data_terms;
     std::set<long> _values;
@@ -377,8 +450,6 @@ namespace tapis::HornICE::qdt {
     _predicates = predicates;
   }
 
-// In src/tapis/engines/attributes/new_attr_synthesizer.cc
-// Complete setup() method with aggregation support
 
 void NewAttributeSynthesizer::setup() {
     ProgramTermAnalyzer pta;
@@ -402,13 +473,15 @@ void NewAttributeSynthesizer::setup() {
         }
       }
 
-      std::vector<hcvc::Expr> booleans;
-      std::vector<hcvc::Expr> datas;
-      std::vector<hcvc::Expr> indexes;
-      std::vector<hcvc::Expr> sums;  // Separate vector for sum variables
-      std::vector<hcvc::Expr> int_quantifier_variables;
+      // Each vector now holds terms of a specific, distinct type.
+      std::vector<hcvc::Expr> arrays;   // For Array-typed variables
+      std::vector<hcvc::Expr> booleans; // For Boolean-typed variables
+      std::vector<hcvc::Expr> datas;    // For non-array, non-bool data variables (e.g., int data)
+      std::vector<hcvc::Expr> indexes;  // For index-like integer variables
+      std::vector<hcvc::Expr> sums;     // For synthetic sum variables
+      std::vector<hcvc::Expr> int_quantifier_variables; // For quantifier variables like !k0
 
-      // Process potential index terms from program analysis
+      // Process potential index terms from program analysis (e.g., i+1)
       for(auto &term: pta._potential_index_terms) {
         auto cnsts = hcvc::get_constants(term);
         bool can = true;
@@ -430,10 +503,13 @@ void NewAttributeSynthesizer::setup() {
         }
       }
 
-      // Process predicate parameters
+      // Process predicate parameters, sorting them by type
       auto &variables = predicate->parameters();
       for(auto variable: variables) {
-        if(variable->type()->is_bool()) {
+        if (variable->type()->is_array()) {
+          auto term = hcvc::VariableConstant::create(variable, 0, this->context());
+          arrays.push_back(term);
+        } else if(variable->type()->is_bool()) {
           auto term = hcvc::VariableConstant::create(variable, 0, this->context());
           booleans.push_back(term);
         } else if(variable->type()->is_int()) {
@@ -447,11 +523,12 @@ void NewAttributeSynthesizer::setup() {
         }
       }
       
-      // Process quantifier variables (following the pattern)
+      // Process quantifier variables
       for(auto qi: _quantifier_manager.quantifiers(predicate)) {
         auto qac = hcvc::VariableConstant::create(qi->quantifier, 0, this->context());
         indexes.push_back(qac);
         int_quantifier_variables.push_back(qac);
+        // The accessor (!array!k0) can be bool or data
         if(qi->accessor->type()->is_bool()) {
           booleans.push_back(hcvc::VariableConstant::create(qi->accessor, 0, this->context()));
         } else {
@@ -459,16 +536,16 @@ void NewAttributeSynthesizer::setup() {
         }
       }
       
-      // Process aggregation variables (same pattern as quantifier loop)
-      // for(auto ai: _aggregation_manager.get_aggregations(predicate)) {
-      //   auto sum_var = hcvc::VariableConstant::create(ai->variable, 0, this->context());
-      //   sums.push_back(sum_var);
-      // }
+      // Process aggregation variables
+      for(auto ai: _aggregation_manager.get_aggregations(predicate)) {
+        auto sum_var = hcvc::VariableConstant::create(ai->variable, 0, this->context());
+        sums.push_back(sum_var);
+      }
       
       // Handle mix_data_indexes option
       if(get_options().ice.learner.mix_data_indexes) {
         indexes.insert(indexes.end(), datas.begin(), datas.end());
-        indexes.insert(indexes.end(), sums.begin(), sums.end());  // Also mix in sums
+        indexes.insert(indexes.end(), sums.begin(), sums.end());
         datas.clear();
         sums.clear();
       }
@@ -485,8 +562,8 @@ void NewAttributeSynthesizer::setup() {
         }
       }
       
-      // Create enumerators for sum variables (if not mixed)
-      // Sums work best with: Interval, DifferenceBound, Octagon, Polyhedra
+      // Create enumerators for sum variables (if not mixed with indexes)
+      // These discover relationships like `s == !s_array_0_i`
       if(!get_options().ice.learner.mix_data_indexes && !sums.empty()) {
         for(auto domain: get_options().ice.learner.index_domains) {
           if(domain == AttributeDomain::Interval || 
@@ -499,7 +576,7 @@ void NewAttributeSynthesizer::setup() {
         }
       }
       
-      // Handle Kmod0 specially (only for quantifier variables)
+      // Handle Kmod0 specially (only for primitive quantifier variables)
       if(get_options().ice.learner.index_domains.count(AttributeDomain::Kmod0)) {
         _index_enumerators[predicate].push_back(
             create_enumerator(AttributeDomain::Kmod0, predicate, int_quantifier_variables, attribute_manager(),
@@ -512,16 +589,17 @@ void NewAttributeSynthesizer::setup() {
             create_enumerator(domain, predicate, datas, attribute_manager(), context()));
       }
       
-      // Handle pattern-based attributes
+      // Handle pattern-based attributes using the new type-aware enumerator
       if(get_options().ice.learner.attr_from_program) {
         for(auto &pattern: pta._attribute_pattern) {
-          // Include sums in pattern enumerator
-          auto pattern_terms = indexes;
-          if(!get_options().ice.learner.mix_data_indexes && !sums.empty()) {
-            pattern_terms.insert(pattern_terms.end(), sums.begin(), sums.end());
-          }
           _index_enumerators[predicate].push_back(
-              new PatternEnumerator(pattern, predicate, pattern_terms, datas, pta._integer_values, attribute_manager(),
+              new PatternEnumerator(pattern, 
+                                    predicate, 
+                                    arrays,  // Pass the dedicated list of array variables
+                                    indexes, // Pass index-like variables
+                                    datas,   // Pass data-like variables
+                                    pta._integer_values, 
+                                    attribute_manager(),
                                     context()));
         }
       }

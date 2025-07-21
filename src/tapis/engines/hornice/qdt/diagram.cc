@@ -179,11 +179,11 @@ namespace tapis::HornICE::qdt {
               }
 
               // 3. Inject the KNOWN SAFE value to prevent the crash.
-              // values[info->variable] = hcvc::IntegerLiteral::get(
-              //     std::to_string(current_sum), 
-              //     info->variable->type(), 
-              //     _context
-              // );
+              values[info->variable] = hcvc::IntegerLiteral::get(
+                  std::to_string(current_sum), 
+                  info->variable->type(), 
+                  _context
+              );
               
           }
           // Create diagram with all the values (quantifiers + sums)

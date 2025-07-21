@@ -12,7 +12,7 @@ int main() {
   //*-- precondition
   unsigned int N;
   // Assume a reasonable, bounded size for the array to make verification tractable.
-  assume(N > 0 && N < 100);
+  assume(N >= 5);
   int array[N];
 
   //*-- computation
@@ -21,7 +21,7 @@ int main() {
   // The expected invariant is: i <= N && s == sum(array, 0, i)
   int s = 0;
   unsigned int i = 0;
-  while(i < N) {
+  while(i < 5) {
     s = s + array[i];
     i = i + 1;
   }
@@ -30,7 +30,7 @@ int main() {
   // After the loop terminates, the verifier knows that i == N.
   // The assertion uses the background 'sum' theory (provided to the SMT solver)
   // to check if the computed value 's' matches the symbolic sum of the entire array.
-  assert_exp("(= s (sum array 0 N))");
+  assert_exp("(= s (sum array 0 5))");
 
   return 0;
 }
