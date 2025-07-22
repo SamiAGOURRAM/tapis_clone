@@ -30,7 +30,7 @@ namespace tapis::HornICE::qdt {
           _formula(std::move(formula)) {}
 
 
-    std::vector<hcvc::Expr> _array_parameters; // <-- ADD
+    std::vector<hcvc::Expr> _array_parameters;
     std::vector<hcvc::Expr> _index_parameters;
     std::vector<hcvc::Expr> _data_parameters;
     std::vector<hcvc::Expr> _integer_parameters;
@@ -170,7 +170,7 @@ namespace tapis::HornICE::qdt {
     std::vector<hcvc::Expr> _array_parameters; 
 
       hcvc::Expr _new_array_parameter(const hcvc::Type* type) {
-      // Use a distinct prefix like "!pa!" for "pattern array"
+      // a distinct prefix "!pa!" for "pattern array"
       auto c = hcvc::Constant::create("!pa!" + std::to_string(counterforpattern++), type, _context);
       _array_parameters.push_back(c);
       return c;
@@ -311,7 +311,6 @@ namespace tapis::HornICE::qdt {
     }
 
 void enumerate() override {
-  // The tuple now has 4 slots to hold assignments for each parameter type.
   using AssignmentTuple = std::tuple<
       std::vector<hcvc::Expr>, // 0: Array assignments
       std::vector<hcvc::Expr>, // 1: Index assignments
@@ -319,7 +318,6 @@ void enumerate() override {
       std::vector<hcvc::Expr>  // 3: Integer assignments
   >;
 
-  // Start with a single empty assignment.
   std::list<AssignmentTuple> assignments = {{}};
 
   // Calculate the total number of parameters to assign.
@@ -434,7 +432,7 @@ void enumerate() override {
 
   private:
     TermPattern _pattern;
-    std::vector<hcvc::Expr> _array_terms; // <-- ADD
+    std::vector<hcvc::Expr> _array_terms;
     std::vector<hcvc::Expr> _index_terms;
     std::vector<hcvc::Expr> _data_terms;
     std::set<long> _values;
@@ -466,14 +464,41 @@ void NewAttributeSynthesizer::setup() {
 
     for(auto predicate: _predicates) {
       if(get_options().ice.learner.attr_from_spec) {
-        auto attrs = PropertyAttributeAnalyzer(_quantifier_manager, attribute_manager()).analyze(get_outputs().clauses,
-                                                                                                 predicate);
-        for(auto attr: attrs) {
-          _init_index_attributes[predicate].insert(attr);
+    auto attrs = PropertyAttributeAnalyzer(_quantifier_manager, attribute_manager()).analyze(get_outputs().clauses,
+                                                                                             predicate);
+    for(auto attr: attrs) {
+        // Skip attributes that contain sum operations over arrays
+        // These cannot be evaluated on diagrams and should use synthetic sum variables instead
+        auto ops = hcvc::get_operations(attr->constraint());
+        bool has_sum = false;
+        for(auto op : ops) {
+            if(op->name() == "sum" || op->name() == "sum_range") {
+                has_sum = true;
+                break;
+            }
         }
-      }
+        
+        // Also check if the attribute references array variables
+        auto constants = hcvc::get_constants(attr->constraint());
+        bool has_array = false;
+        for(const auto& c : constants) {
+            if(c->type()->is_array()) {
+                has_array = true;
+                break;
+            }
+        }
+        
+        // Skip attributes with sum operations or array references
+        if(has_sum || has_array) {
+            std::cerr << "Skipping attribute that cannot be evaluated on diagrams: " 
+                      << attr->constraint() << std::endl;
+            continue;
+        }
+        
+        _init_index_attributes[predicate].insert(attr);
+    }
+}
 
-      // Each vector now holds terms of a specific, distinct type.
       std::vector<hcvc::Expr> arrays;   // For Array-typed variables
       std::vector<hcvc::Expr> booleans; // For Boolean-typed variables
       std::vector<hcvc::Expr> datas;    // For non-array, non-bool data variables (e.g., int data)

@@ -6,8 +6,8 @@
 
 #include "hcvc/context.hh"
 #include "hcvc/clause/predicate.hh"
-#include "hcvc/logic/printer.hh" // <-- ADD THIS INCLUDE
-#include <iostream>              // <-- ADD THIS INCLUDE
+#include "hcvc/logic/printer.hh"
+#include <iostream>              
 #include <cstdlib>
 
 namespace hcvc {
@@ -267,12 +267,7 @@ namespace hcvc {
       return IntegerLiteral::get(std::to_string(0), args[1]->type(), args[0]->context());
     };
 
-    func_eval_map["sum"] = [](const std::vector<Expr> &args) {
-    Printer printer;
-    std::cout << "[DEBUG] Evaluating sum_range with " << args.size() << " arguments:" << std::endl;
-    for (size_t i = 0; i < args.size(); ++i) {
-        std::cout << "  - Arg " << i << ": " << printer.to_string(args[i]) << std::endl;
-    }
+func_eval_map["sum"] = [](const std::vector<Expr> &args) {
     // We can only evaluate if the arguments are concrete literals
     if (args[0]->kind() == TermKind::ArrayLiteral &&
         args[1]->kind() == TermKind::IntegerLiteral &&
@@ -293,17 +288,14 @@ namespace hcvc {
               total += std::stol(elem->value());
             } else {
               // Cannot evaluate if an element is symbolic, so return the original expression
-              std::cout << "[DEBUG] sum_range cannot be fully evaluated (non-literal element). Re-applying symbolic operator." << std::endl;
-              return args[0]->context().apply("sum_range", args);
+              return args[0]->context().apply("sum", args);
             }
         }
-        std::cout << "[DEBUG] sum_range was fully evaluated to: " << total << std::endl;
         return IntegerLiteral::get(std::to_string(total), args[0]->context().type_manager().int_type(), args[0]->context());
       }
     }
     // If arguments are not concrete, or bounds are invalid, return the original symbolic expression
-    std::cout << "[DEBUG] sum_range cannot be fully evaluated. Re-applying symbolic operator." << std::endl;
-    return args[0]->context().apply("sum_range", args);
+    return args[0]->context().apply("sum", args);
   };
   }
 

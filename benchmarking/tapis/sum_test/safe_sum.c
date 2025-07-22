@@ -21,7 +21,7 @@ int main() {
   // The expected invariant is: i <= N && s == sum(array, 0, i)
   int s = 0;
   unsigned int i = 0;
-  while(i < 5) {
+  while(i < N) {
     s = s + array[i];
     i = i + 1;
   }
@@ -30,7 +30,7 @@ int main() {
   // After the loop terminates, the verifier knows that i == N.
   // The assertion uses the background 'sum' theory (provided to the SMT solver)
   // to check if the computed value 's' matches the symbolic sum of the entire array.
-  assert_exp("(= s (sum array 0 5))");
+  assert_exp("(= s (sum array 0 N))");
 
   return 0;
 }

@@ -8,7 +8,7 @@
             "program": "${workspaceFolder}/build/tapis", // Path to your executable
             "args": [
                 // The command-line arguments for your test case
-                "/home/sami/tapis/benchmarking/tapis/tapis-bench/iterative/array-bubble-sort-fwd.c"
+                "/home/sami/tapis/benchmarking/tapis/sum_test/safe_sum.c"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
