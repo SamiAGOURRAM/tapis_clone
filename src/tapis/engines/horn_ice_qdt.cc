@@ -21,9 +21,6 @@ namespace tapis {
   HornICEQDT::~HornICEQDT() = default;
 
 
-// In src/tapis/engines/horn_ice_qdt.cc
-// Complete solve() method with proper manager setup
-
 void HornICEQDT::solve() {
     // Extract predicates from clauses
     std::set<const hcvc::Predicate *> predicates;

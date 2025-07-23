@@ -84,23 +84,6 @@ namespace smtface::solvers {
     z3_func_map["store"] = [](const z3::expr_vector &args) {
       return z3::store(args[0], args[1], args[2]);
     };
-
-    z3_func_map["sum"] = [](const z3::expr_vector &args) {
-    z3::context& ctx = args.ctx();
-
-    // Re-declare the function's signature to find it in the context
-    z3::sort_vector domain(ctx);
-    domain.push_back(ctx.array_sort(ctx.int_sort(), ctx.int_sort()));
-    domain.push_back(ctx.int_sort());
-    domain.push_back(ctx.int_sort());
-    z3::sort range = ctx.int_sort();
-    
-    // Find the "sum_range" function that was defined in solver.cc
-    z3::func_decl sum_range_func = ctx.function("sum_range", domain, range);
-
-    // Apply the function to the translated arguments
-    return sum_range_func(args);
-  };
     // TODO: support real theory operations
   }
 

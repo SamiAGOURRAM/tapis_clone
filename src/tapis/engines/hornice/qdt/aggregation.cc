@@ -72,9 +72,6 @@ void AggregationManager::setup() {
 
         std::vector<const hcvc::Variable*> all_bounds = int_vars_in_pred;
 
-        // **FIX 1: Use the correct API from quantifier.hh**
-        // The method is `quantifiers`, not `get_quantifiers`.
-        // It returns QuantifierInfo*, so we must extract the `quantifier` member.
         const auto& quantifier_infos = _quantifier_manager.quantifiers(predicate);
         for (const auto* info : quantifier_infos) {
             all_bounds.push_back(info->quantifier);
@@ -103,12 +100,10 @@ void AggregationManager::setup() {
 
                     info->variable = hcvc::Variable::create(agg_var_name, context().type_manager().int_type(), context(), true);
 
-                    // **FIX 2: Use `auto` for shared_ptr types (hcvc::Expr).**
                     auto array_term = hcvc::VariableConstant::create(array, 0, context());
                     auto lower_term = (lower_var) ? hcvc::VariableConstant::create(lower_var, 0, context()) : hcvc::IntegerLiteral::get("0", context().type_manager().int_type(), context());
                     auto upper_term = hcvc::VariableConstant::create(upper_var, 0, context());
 
-                    // **FIX 3: Use the correct API from context.hh**
                     // The method is `apply("sum", ...)`
                     auto sum_term = context().apply("sum", {array_term, lower_term, upper_term});
 

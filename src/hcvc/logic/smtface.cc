@@ -53,8 +53,6 @@ void To_smtface::visit(std::shared_ptr<OperatorApplication> term) {
     } else if (name == "/") {
         name = "div";
     } else if (name == "sum" || name == "sum_range") {
-        // *** REVISED FIX STARTS HERE ***
-
         // 1. Define the function's signature for the smtface context.
         smtface::Sort array_sort = smtface::ArraySort(smtface::INT(), smtface::INT());
         smtface::Sort int_sort = smtface::INT();

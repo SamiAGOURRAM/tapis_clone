@@ -216,46 +216,88 @@ namespace tapis::HornICE::qdt {
       }
     }
 
-    void visit(std::shared_ptr<hcvc::OperatorApplication> term) override {
-      // ignore any term coming from "i = i + c" where c in a literal integer
-      if(is_var_incrementation(term)) {
-        return;
-      }
-      for(auto &argument: term->arguments()) {
-        argument->accept(*this);
-      }
-      auto op_name = term->operat0r()->name();
-      if(op_name == "[]") { // a[i] or a[i] = v
-        auto i = term->arguments()[1];
-        if(i->kind() != hcvc::TermKind::Constant) {
-          _potential_index_terms.push_back(i);
-        }
-      }
-      if(op_name == "[]" && term->arguments().size() == 3) { // a[i] = v
-        if(!term->arguments()[2]->type()->is_bool()) {
-          _attribute_pattern.push_back(Term2Pattern(term->context()).analyze(term));
-        }
-      }
-      if(op_name == "<=" || op_name == "<" || op_name == ">" || op_name == ">=" || op_name == "=") {
-        auto left_ops = hcvc::get_operations(term->arguments()[0]);
-        auto right_ops = hcvc::get_operations(term->arguments()[1]);
-        auto left_contains_const = std::count_if(left_ops.begin(), left_ops.end(), [](const hcvc::Operator *op) {
-          return op->name() == "<=" || op->name() == "<" || op->name() == ">" || op->name() == ">=" ||
-                 op->name() == "=";
-        });
-        auto right_contains_const = std::count_if(left_ops.begin(), left_ops.end(), [](const hcvc::Operator *op) {
-          return op->name() == "<=" || op->name() == "<" || op->name() == ">" || op->name() == ">=" ||
-                 op->name() == "=";
-        });
-        auto args_are_bool_or_array = std::all_of(term->arguments().begin(), term->arguments().end(),
-                                                  [](const hcvc::Expr &t) {
-                                                    return !t->type()->is_bool() && !t->type()->is_array();
-                                                  });
-        if(!left_contains_const && !right_contains_const && args_are_bool_or_array) {
-          _attribute_pattern.push_back(Term2Pattern(term->context()).analyze(term));
-        }
+void visit(std::shared_ptr<hcvc::OperatorApplication> term) override {
+    // ignore any term coming from "i = i + c" where c is a literal integer
+    if(is_var_incrementation(term)) {
+      return;
+    }
+    
+    // Check if this term contains sum operations - if so, skip it
+    auto ops = hcvc::get_operations(term);
+    bool has_sum = false;
+    for(auto op : ops) {
+      if(op->name() == "sum" || op->name() == "sum_range") {
+        has_sum = true;
+        break;
       }
     }
+    
+    if(has_sum) {
+      // Skip this term entirely - don't extract patterns from sum expressions
+      // The sum variables will be handled by the AggregationManager
+      return;
+    }
+    
+    for(auto &argument: term->arguments()) {
+      argument->accept(*this);
+    }
+    
+    auto op_name = term->operat0r()->name();
+    if(op_name == "[]") { // a[i] or a[i] = v
+      auto i = term->arguments()[1];
+      if(i->kind() != hcvc::TermKind::Constant) {
+        _potential_index_terms.push_back(i);
+      }
+    }
+    if(op_name == "[]" && term->arguments().size() == 3) { // a[i] = v
+      if(!term->arguments()[2]->type()->is_bool()) {
+        _attribute_pattern.push_back(Term2Pattern(term->context()).analyze(term));
+      }
+    }
+    if(op_name == "<=" || op_name == "<" || op_name == ">" || op_name == ">=" || op_name == "=") {
+      auto left_ops = hcvc::get_operations(term->arguments()[0]);
+      auto right_ops = hcvc::get_operations(term->arguments()[1]);
+      
+      // Check if either argument contains sum operations
+      bool left_has_sum = false;
+      bool right_has_sum = false;
+      
+      for(auto op : left_ops) {
+        if(op->name() == "sum" || op->name() == "sum_range") {
+          left_has_sum = true;
+          break;
+        }
+      }
+      
+      for(auto op : right_ops) {
+        if(op->name() == "sum" || op->name() == "sum_range") {
+          right_has_sum = true;
+          break;
+        }
+      }
+      
+      // Skip patterns containing sum operations
+      if(left_has_sum || right_has_sum) {
+        return;
+      }
+      
+      auto left_contains_const = std::count_if(left_ops.begin(), left_ops.end(), [](const hcvc::Operator *op) {
+        return op->name() == "<=" || op->name() == "<" || op->name() == ">" || op->name() == ">=" ||
+               op->name() == "=";
+      });
+      auto right_contains_const = std::count_if(right_ops.begin(), right_ops.end(), [](const hcvc::Operator *op) {
+        return op->name() == "<=" || op->name() == "<" || op->name() == ">" || op->name() == ">=" ||
+               op->name() == "=";
+      });
+      auto args_are_bool_or_array = std::all_of(term->arguments().begin(), term->arguments().end(),
+                                                [](const hcvc::Expr &t) {
+                                                  return !t->type()->is_bool() && !t->type()->is_array();
+                                                });
+      if(!left_contains_const && !right_contains_const && args_are_bool_or_array) {
+        _attribute_pattern.push_back(Term2Pattern(term->context()).analyze(term));
+      }
+    }
+}
 
     void visit(std::shared_ptr<hcvc::Constant> term) override {}
 
@@ -464,41 +506,42 @@ void NewAttributeSynthesizer::setup() {
 
     for(auto predicate: _predicates) {
       if(get_options().ice.learner.attr_from_spec) {
-    auto attrs = PropertyAttributeAnalyzer(_quantifier_manager, attribute_manager()).analyze(get_outputs().clauses,
-                                                                                             predicate);
-    for(auto attr: attrs) {
-        // Skip attributes that contain sum operations over arrays
-        // These cannot be evaluated on diagrams and should use synthetic sum variables instead
-        auto ops = hcvc::get_operations(attr->constraint());
-        bool has_sum = false;
-        for(auto op : ops) {
+        auto attrs = PropertyAttributeAnalyzer(_quantifier_manager, attribute_manager()).analyze(get_outputs().clauses,
+                                                                                                 predicate);
+        for(auto attr: attrs) {
+          // Skip attributes that contain sum operations over arrays
+          // These cannot be evaluated on diagrams and should use synthetic sum variables instead
+          auto ops = hcvc::get_operations(attr->constraint());
+          bool has_sum = false;
+          for(auto op : ops) {
             if(op->name() == "sum" || op->name() == "sum_range") {
-                has_sum = true;
-                break;
+              has_sum = true;
+              break;
             }
-        }
-        
-        // Also check if the attribute references array variables
-        auto constants = hcvc::get_constants(attr->constraint());
-        bool has_array = false;
-        for(const auto& c : constants) {
+          }
+          
+          // Also check if the attribute references array variables
+          auto constants = hcvc::get_constants(attr->constraint());
+          bool has_array = false;
+          for(const auto& c : constants) {
             if(c->type()->is_array()) {
-                has_array = true;
-                break;
+              has_array = true;
+              break;
             }
-        }
-        
-        // Skip attributes with sum operations or array references
-        if(has_sum || has_array) {
-            std::cerr << "Skipping attribute that cannot be evaluated on diagrams: " 
+          }
+          
+          // Skip attributes with sum operations or array references
+          if(has_sum || has_array) {
+            std::cerr << "Skipping PropertyAttributeAnalyzer attribute that cannot be evaluated on diagrams: " 
                       << attr->constraint() << std::endl;
             continue;
+          }
+          
+          _init_index_attributes[predicate].insert(attr);
         }
-        
-        _init_index_attributes[predicate].insert(attr);
-    }
-}
+      }
 
+      // Each vector now holds terms of a specific, distinct type.
       std::vector<hcvc::Expr> arrays;   // For Array-typed variables
       std::vector<hcvc::Expr> booleans; // For Boolean-typed variables
       std::vector<hcvc::Expr> datas;    // For non-array, non-bool data variables (e.g., int data)
@@ -616,6 +659,9 @@ void NewAttributeSynthesizer::setup() {
       
       // Handle pattern-based attributes using the new type-aware enumerator
       if(get_options().ice.learner.attr_from_program) {
+        // Debug: Print extracted patterns
+        std::cerr << "Number of attribute patterns extracted: " << pta._attribute_pattern.size() << std::endl;
+        
         for(auto &pattern: pta._attribute_pattern) {
           _index_enumerators[predicate].push_back(
               new PatternEnumerator(pattern, 
@@ -631,7 +677,6 @@ void NewAttributeSynthesizer::setup() {
     }
     generate_attributes(nullptr);
   }
-
   std::pair<std::set<const Attribute *>, std::set<const Attribute *>>
   NewAttributeSynthesizer::attributes(const hcvc::Predicate *predicate) const {
     std::pair<std::set<const Attribute *>, std::set<const Attribute *>> res;

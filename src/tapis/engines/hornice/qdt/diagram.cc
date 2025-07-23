@@ -56,7 +56,17 @@ namespace tapis::HornICE::qdt {
                 continue;
               }
             }
-            const auto& quantifiers_for_array = _quantifier_manager.array_quantifiers(state->predicate()).at(parameter);
+                auto& aq_map = _quantifier_manager.array_quantifiers(state->predicate());
+    if (aq_map.find(parameter) == aq_map.end()) {
+      // No quantifiers for this array parameter
+      continue;
+    }
+    
+    const auto& quantifiers_for_array = aq_map.at(parameter);
+    if (quantifiers_for_array.empty()) {
+      // No quantifiers for this array
+      continue;
+    }
             std::list<std::map<QuantifierInfo *, unsigned long>> array_combination;
             for(unsigned long i = 0; i < quantifiers_for_array.size(); i++) {
               auto qi = quantifiers_for_array[i];
@@ -119,12 +129,16 @@ namespace tapis::HornICE::qdt {
           for (const auto* info : agg_infos) {
               // Skip if array not found
               if (values.find(info->array) == values.end()) {
+                        std::cout << "[DEBUG] Skipping sum for missing array: " << info->array->name() << std::endl;
+
                   continue;
               }
               
               auto array_literal_expr = values.at(info->array);
               auto array_literal = std::dynamic_pointer_cast<hcvc::ArrayLiteral>(array_literal_expr);
               if (array_literal.get() == nullptr) {
+                        std::cout << "[DEBUG] Array is not a literal: " << info->array->name() << std::endl;
+
                   continue;
               }
               
@@ -161,24 +175,43 @@ namespace tapis::HornICE::qdt {
               } else {
                   continue;
               }
-              
+                  // DEBUG: Print sum computation details
+    std::cout << "[DEBUG] Computing sum for " << info->variable->name() << ":" << std::endl;
+    std::cout << "  Array: " << info->array->name() << " = [";
+    for (size_t k = 0; k < array_literal->values().size(); ++k) {
+        auto elem = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(array_literal->values()[k]);
+        std::cout << (elem ? elem->value() : "?");
+        if (k < array_literal->values().size() - 1) std::cout << ", ";
+    }
+    std::cout << "]" << std::endl;
+    std::cout << "  Lower bound: " << lower_val << std::endl;
+    std::cout << "  Upper bound: " << upper_val << std::endl;
+
               // Calculate sum
               long long current_sum = 0;
               size_t array_size = array_literal->values().size();
               if (lower_val >= 0 && upper_val >= 0 && 
                   lower_val <= upper_val && 
                   static_cast<size_t>(upper_val) <= array_size) {
+
+                            std::cout << "  Summing indices [" << lower_val << ", " << upper_val << "):" << std::endl;
+
                   
                   for (long k = lower_val; k < upper_val; ++k) {
                       auto elem_expr = array_literal->values().at(static_cast<size_t>(k));
                       auto elem_lit = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(elem_expr);
                       if (elem_lit) {
+                        long elem_val = std::stol(elem_lit->value());
                           current_sum += std::stoll(elem_lit->value());
+                                          std::cout << "    array[" << k << "] = " << elem_val << ", running sum = " << current_sum << std::endl;
+
                       }
                   }
               }
 
               // 3. Inject the KNOWN SAFE value to prevent the crash.
+                  std::cout << "  Final sum: " << current_sum << std::endl;
+
               values[info->variable] = hcvc::IntegerLiteral::get(
                   std::to_string(current_sum), 
                   info->variable->type(), 
@@ -197,8 +230,6 @@ namespace tapis::HornICE::qdt {
     }
     return _state_diagrams.at(state);
   }
-
-// In src/tapis/engines/hornice/qdt/diagram.cc
 
 const Diagram *
 DiagramManager::_get_diagram(const hcvc::Predicate *predicate,
