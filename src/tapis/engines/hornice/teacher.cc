@@ -29,7 +29,6 @@ namespace tapis::HornICE {
   const hcvc::State *_extract(const std::shared_ptr<hcvc::PredicateApplication> &pred_app, smtface::Model &model,
                               hcvc::StateManager &state_manager) {
     auto z3m = std::dynamic_pointer_cast<smtface::solvers::Z3Model>(model)->z3_model();
-    std::cout << "[DEBUG] Z3 Model:\n" << z3m << std::endl;
 
     std::map<std::string, z3::func_decl> interps;
     for(unsigned long i = 0; i < z3m.num_funcs(); i++) {
@@ -47,16 +46,11 @@ namespace tapis::HornICE {
     for(unsigned long i = 0, size = pred_app->arguments().size(); i < size; i++) {
       auto param = pred_app->predicate()->parameters()[i];
 
-              std::cout << "[DEBUG] Extracting param " << i << ": " << param->name() 
-                  << " (type: " << (param->type()->is_array() ? "array" : 
-                                   param->type()->is_bool() ? "bool" : "int") << ")" << std::endl;
-
                       if(param->type()->is_int() && !param->type()->is_bool()) {
             auto eval = model->eval(hcvc::to_smtface(pred_app->arguments()[i]));
             auto int_val = std::dynamic_pointer_cast<smtface::core::Value>(eval)->raw();
             
             // DEBUG: Print the extracted integer value
-            std::cout << "[DEBUG] Extracted value for " << param->name() << ": " << int_val << std::endl;
             
             values[param] = hcvc::IntegerLiteral::get(int_val, param->type(), pred_app->context());
         }
@@ -72,12 +66,12 @@ if(param->type()->is_array()) {
     std::vector<hcvc::Expr> array;
     auto array_var_name = std::dynamic_pointer_cast<hcvc::VariableConstant>(pred_app->arguments()[i])->name();
     
-    std::cout << "[DEBUG] Array variable name: " << array_var_name << std::endl;
-    std::cout << "[DEBUG] Array size: " << arr_size << std::endl;
-    std::cout << "[DEBUG] Available interpretations in interps map:" << std::endl;
-    for(const auto& [name, decl] : interps) {
-        std::cout << "  " << name << std::endl;
-    }
+    // std::cout << "[DEBUG] Array variable name: " << array_var_name << std::endl;
+    // std::cout << "[DEBUG] Array size: " << arr_size << std::endl;
+    // std::cout << "[DEBUG] Available interpretations in interps map:" << std::endl;
+    // for(const auto& [name, decl] : interps) {
+    //     std::cout << "  " << name << std::endl;
+    // }
     
     for(long j = 0; j < arr_size; j++) {
         z3::expr v(z3m.ctx());
@@ -85,11 +79,11 @@ if(param->type()->is_array()) {
         
         // METHOD 1: Try the interps map (original approach)
         if(interps.count(array_var_name) > 0) {
-            std::cout << "[DEBUG] Found " << array_var_name << " in interps map" << std::endl;
+            // std::cout << "[DEBUG] Found " << array_var_name << " in interps map" << std::endl;
             v = z3m.eval((interps.at(array_var_name))(j));
             found_value = true;
         } else {
-            std::cout << "[DEBUG] " << array_var_name << " NOT found in interps map" << std::endl;
+            // std::cout << "[DEBUG] " << array_var_name << " NOT found in interps map" << std::endl;
             
             // METHOD 2: Try direct Z3 evaluation
             try {
@@ -101,10 +95,10 @@ if(param->type()->is_array()) {
                 z3::expr select_expr = select(array_var, index_expr);
                 v = z3m.eval(select_expr);
                 
-                std::cout << "[DEBUG] Direct eval for array[" << j << "]: " << v << std::endl;
+                // std::cout << "[DEBUG] Direct eval for array[" << j << "]: " << v << std::endl;
                 found_value = true;
             } catch(const std::exception& e) {
-                std::cout << "[DEBUG] Direct eval failed: " << e.what() << std::endl;
+                // std::cout << "[DEBUG] Direct eval failed: " << e.what() << std::endl;
                 // Fall back to default
                 if(arr_type->element_type()->is_int()) {
                     v = z3m.ctx().int_val(0);
@@ -115,7 +109,7 @@ if(param->type()->is_array()) {
             }
         }
         
-        std::cout << "[DEBUG] Final Z3 value for array[" << j << "]: " << v << std::endl;
+        // std::cout << "[DEBUG] Final Z3 value for array[" << j << "]: " << v << std::endl;
         
         // Convert to HCVC expression
         if(v.is_bool()) {
@@ -133,7 +127,7 @@ if(param->type()->is_array()) {
                                               pred_app->context()));
             } else {
                 // It's a symbolic expression, use default value
-                std::cout << "[DEBUG] Symbolic array value: " << v << ", using default 0" << std::endl;
+                // std::cout << "[DEBUG] Symbolic array value: " << v << ", using default 0" << std::endl;
                 array.push_back(
                     hcvc::IntegerLiteral::get("0",
                                               dynamic_cast<const hcvc::ArrayType *>(param->type())->element_type(),
@@ -142,17 +136,17 @@ if(param->type()->is_array()) {
         }
     }
     
-    std::cout << "[DEBUG] Final extracted array: [";
-    for(size_t k = 0; k < array.size(); ++k) {
-        auto int_lit = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(array[k]);
-        if(int_lit) {
-            std::cout << int_lit->value();
-        } else {
-            std::cout << "?";
-        }
-        if(k < array.size() - 1) std::cout << ", ";
-    }
-    std::cout << "]" << std::endl;
+    // std::cout << "[DEBUG] Final extracted array: [";
+    // for(size_t k = 0; k < array.size(); ++k) {
+    //     auto int_lit = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(array[k]);
+    //     if(int_lit) {
+    //         std::cout << int_lit->value();
+    //     } else {
+    //         std::cout << "?";
+    //     }
+    //     if(k < array.size() - 1) std::cout << ", ";
+    // }
+    // std::cout << "]" << std::endl;
     
     values[param] = hcvc::ArrayLiteral::get(array, param->type(), pred_app->context());
 }

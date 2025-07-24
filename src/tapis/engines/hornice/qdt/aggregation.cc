@@ -99,6 +99,7 @@ void AggregationManager::setup() {
                     std::string agg_var_name = "!s_" + array->name() + "_" + lower_name + "_" + upper_name;
 
                     info->variable = hcvc::Variable::create(agg_var_name, context().type_manager().int_type(), context(), true);
+                    info->variable->set_is_data();
 
                     auto array_term = hcvc::VariableConstant::create(array, 0, context());
                     auto lower_term = (lower_var) ? hcvc::VariableConstant::create(lower_var, 0, context()) : hcvc::IntegerLiteral::get("0", context().type_manager().int_type(), context());

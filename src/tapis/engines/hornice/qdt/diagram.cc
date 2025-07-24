@@ -129,7 +129,7 @@ namespace tapis::HornICE::qdt {
           for (const auto* info : agg_infos) {
               // Skip if array not found
               if (values.find(info->array) == values.end()) {
-                        std::cout << "[DEBUG] Skipping sum for missing array: " << info->array->name() << std::endl;
+                        // std::cout << "[DEBUG] Skipping sum for missing array: " << info->array->name() << std::endl;
 
                   continue;
               }
@@ -137,7 +137,7 @@ namespace tapis::HornICE::qdt {
               auto array_literal_expr = values.at(info->array);
               auto array_literal = std::dynamic_pointer_cast<hcvc::ArrayLiteral>(array_literal_expr);
               if (array_literal.get() == nullptr) {
-                        std::cout << "[DEBUG] Array is not a literal: " << info->array->name() << std::endl;
+                        // std::cout << "[DEBUG] Array is not a literal: " << info->array->name() << std::endl;
 
                   continue;
               }
@@ -176,16 +176,16 @@ namespace tapis::HornICE::qdt {
                   continue;
               }
                   // DEBUG: Print sum computation details
-    std::cout << "[DEBUG] Computing sum for " << info->variable->name() << ":" << std::endl;
-    std::cout << "  Array: " << info->array->name() << " = [";
-    for (size_t k = 0; k < array_literal->values().size(); ++k) {
-        auto elem = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(array_literal->values()[k]);
-        std::cout << (elem ? elem->value() : "?");
-        if (k < array_literal->values().size() - 1) std::cout << ", ";
-    }
-    std::cout << "]" << std::endl;
-    std::cout << "  Lower bound: " << lower_val << std::endl;
-    std::cout << "  Upper bound: " << upper_val << std::endl;
+    // std::cout << "[DEBUG] Computing sum for " << info->variable->name() << ":" << std::endl;
+    // std::cout << "  Array: " << info->array->name() << " = [";
+    // for (size_t k = 0; k < array_literal->values().size(); ++k) {
+    //     auto elem = std::dynamic_pointer_cast<hcvc::IntegerLiteral>(array_literal->values()[k]);
+    //     // std::cout << (elem ? elem->value() : "?");
+    //     if (k < array_literal->values().size() - 1) std::cout << ", ";
+    // }
+    // std::cout << "]" << std::endl;
+    // std::cout << "  Lower bound: " << lower_val << std::endl;
+    // std::cout << "  Upper bound: " << upper_val << std::endl;
 
               // Calculate sum
               long long current_sum = 0;
@@ -194,7 +194,7 @@ namespace tapis::HornICE::qdt {
                   lower_val <= upper_val && 
                   static_cast<size_t>(upper_val) <= array_size) {
 
-                            std::cout << "  Summing indices [" << lower_val << ", " << upper_val << "):" << std::endl;
+                            // std::cout << "  Summing indices [" << lower_val << ", " << upper_val << "):" << std::endl;
 
                   
                   for (long k = lower_val; k < upper_val; ++k) {
@@ -203,14 +203,14 @@ namespace tapis::HornICE::qdt {
                       if (elem_lit) {
                         long elem_val = std::stol(elem_lit->value());
                           current_sum += std::stoll(elem_lit->value());
-                                          std::cout << "    array[" << k << "] = " << elem_val << ", running sum = " << current_sum << std::endl;
+                                          // std::cout << "    array[" << k << "] = " << elem_val << ", running sum = " << current_sum << std::endl;
 
                       }
                   }
               }
 
               // 3. Inject the KNOWN SAFE value to prevent the crash.
-                  std::cout << "  Final sum: " << current_sum << std::endl;
+                  // std::cout << "  Final sum: " << current_sum << std::endl;
 
               values[info->variable] = hcvc::IntegerLiteral::get(
                   std::to_string(current_sum), 
@@ -245,9 +245,7 @@ DiagramManager::_get_diagram(const hcvc::Predicate *predicate,
     }
     hash += ")";
     if(_diagrams.count(hash) == 0) {
-      //VVVVVVVVVVVVVVVVVVV ADD THIS LINE VVVVVVVVVVVVVVVVVVV
       std::cout << "[Diagram Generated] " << hash << '\n';
-      //AAAAAAAAAAAAAAAAAAAAA END OF ADDITION AAAAAAAAAAAAAAAAAAAAA
       _diagrams[hash] = std::make_unique<Diagram>(predicate, diagram_values, hash, _z3_ctx);
     }
     return _diagrams.at(hash).get();

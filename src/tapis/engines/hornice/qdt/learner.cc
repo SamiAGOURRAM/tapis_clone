@@ -85,14 +85,14 @@ Learner::Learner(hcvc::Module *module, const hcvc::ClauseSet &clauses,
     std::cout << "Datapoints: " << _set.classifications().size() << " - Diagrams: "
               << _diagram_set.classifications().size() << "\n";
 #endif
-    std::cout << "Synthesizing attributes...\n";
+    // std::cout << "Synthesizing attributes...\n";
     if(more_quantifier_variable) {
       _classifier->resetup_attributes();
     }
 
-    std::cout << "Classifying diagrams...\n";
+    // std::cout << "Classifying diagrams...\n";
     auto classifier_res = _classifier->classify(_diagram_set);
-    std::cout << "Classified diagrams: " << classifier_res.has_value() << "\n";
+    // std::cout << "Classified diagrams: " << classifier_res.has_value() << "\n";
 
     if(!classifier_res.has_value()) {
       std::cerr << "Classifier failed to classify diagrams." << std::endl;

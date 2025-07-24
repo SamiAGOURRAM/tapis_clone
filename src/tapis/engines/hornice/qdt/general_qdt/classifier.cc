@@ -71,7 +71,7 @@ namespace tapis::HornICE::qdt::GeneralQDT {
 
   std::optional<std::unordered_map<const hcvc::Predicate *, hcvc::Expr>>
   Classifier::classify(const tapis::HornICE::qdt::DiagramPartialReachabilityGraph &diag_set) {
-    std::cout << "inside Classifier::classify\n";
+    // std::cout << "inside Classifier::classify\n";
     delete _working_set;
     _working_set = new DiagramPartialReachabilityGraph(diag_set);
 
@@ -83,7 +83,7 @@ namespace tapis::HornICE::qdt::GeneralQDT {
       if(!_attr_synthesizer->generate_attributes(_working_set)) {
         return std::nullopt;
       }
-      std::cout << "Attributes generated: " << "\n";
+      // std::cout << "Attributes generated: " << "\n";
     }
     //}
 
