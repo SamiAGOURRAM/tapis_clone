@@ -607,7 +607,7 @@ void NewAttributeSynthesizer::setup() {
       // Process aggregation variables
       for(auto ai: _aggregation_manager.get_aggregations(predicate)) {
         auto sum_var = hcvc::VariableConstant::create(ai->variable, 0, this->context());
-        sums.push_back(sum_var);
+        datas.push_back(sum_var);
       }
       
       // Handle mix_data_indexes option
